@@ -128,8 +128,8 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
    - The lift runs from the lakeside village (under low cloud) to just under the summit. You turn around at the top to look back down the valley.
 5. **Forests and runs.** Forest everywhere with real variety (spruce, fir, snow ghosts, dead snags, young trees), and runs cut through as white ribbons. A terrain park with jumps and rails.
 6. **Soft clouds.** Replace the chunky puffs with a soft fluffy bank you ride through.
-7. **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view.
-8. **First-person ride.** Look around, fast-forward, tower jolts, unloading at the top.
+7. ✅ **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view. Source in `blender/chairlift.blend` (the build script is in its `lift_helpers.py` text block), exported to `public/models/chairlift.glb`.
+8. 🟡 **First-person ride.** Done: look around, hold to speed up, unloading at the top, the chairs moving with you. Still to do: a little jolt passing each tower, and the chair swinging.
 9. **Skiers.** One cute low-poly skier with swappable jacket and pants colours. Scripted moments: the cliff jump under the lift, carving with powder trails, park tricks, ragdoll wipeouts, and click-to-wipe-out from the bench.
 10. **Top station.** The board menu (right) and the bench view (left), snow shaking off the board, your third-person skier skiing to each section.
 11. **Sound.** Wind, lift creaks and tower clunks, snow crunch, soft music (or your own whistling). Uses three.js positional audio. Free sources: [freesound.org](https://freesound.org) (CC0) and [Pixabay Music](https://pixabay.com/music/).
