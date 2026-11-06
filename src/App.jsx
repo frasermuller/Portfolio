@@ -40,7 +40,8 @@ function App() {
         <Trees />
         <Clouds />
         <Snow />
-        <TopStation onBoard={() => setShot('board')} onBench={() => setShot('view')} />
+        {/* The board and bench only respond once you're off the lift, so a click can't fight the intro. */}
+        <TopStation onBoard={() => arrived && setShot('board')} onBench={() => arrived && setShot('view')} />
         <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
 
@@ -57,11 +58,18 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* Placeholder UI until the real board menu exists: the trail list only shows once you're at the board. */}
+      {/* Placeholder UI until the real board menu exists. These are real buttons, so keyboard and screen-reader
+          users can go everywhere the 3D board and bench go. The first one takes focus when you arrive. */}
       {arrived && shot === 'top' && (
-        <motion.p className="hint" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.6 }}>
-          Trail map on the board to your right. The view's on your left. Drag to look around.
-        </motion.p>
+        <motion.div className="choices" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.6 }}>
+          <button className="choice" onClick={() => setShot('view')} autoFocus>
+            Sit on the bench
+          </button>
+          <span className="choice-note">or drag to look around</span>
+          <button className="choice" onClick={() => setShot('board')}>
+            Read the trail board
+          </button>
+        </motion.div>
       )}
 
       {arrived && shot !== 'top' && shot !== 'view' && (

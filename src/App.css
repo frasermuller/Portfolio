@@ -113,16 +113,51 @@
   }
 }
 
-.hint {
+/* Bench on the left, board on the right, matching where they stand in the scene. */
+.choices {
   position: absolute;
   left: 50%;
   bottom: var(--margin);
   translate: -50% 0;
-  max-width: calc(100% - 2 * var(--margin));
-  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.choice {
+  font: 600 var(--step-small) / 1 var(--font-text);
+  padding: 12px 16px;
+  border: 0;
   background: var(--plate);
   color: var(--plate-ink);
+  cursor: pointer;
+}
+
+.choice:hover,
+.choice:focus-visible {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.choice-note {
   font-size: var(--step-small);
-  text-align: center;
-  pointer-events: none;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* Drag-to-look needs every touch move, so stop the browser from treating it as a page pan. */
+.scene canvas {
+  touch-action: none;
+}
+
+@media (max-width: 640px) {
+  /* The signpost runs along the bottom on phones, so the corner button moves up out of its way. */
+  .corner {
+    top: var(--margin);
+    bottom: auto;
+  }
+
+  .choice-note {
+    display: none;
+  }
 }
