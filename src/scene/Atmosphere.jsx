@@ -35,7 +35,7 @@ export default function Atmosphere() {
     }
     const clear = clearness(camera.position.y)
     // Thick fog under the clouds. Above them, just enough haze to soften the far side of the mountain.
-    scene.fog.density = lerp(0.017, 0.0013, clear)
+    scene.fog.density = lerp(0.017, 0.001, clear)
     scene.fog.color.lerpColors(whiteout, horizon, clear)
     // Under the clouds the light is flat and grey. Above, the low sun takes over.
     sun.current.intensity = lerp(0.5, 2.6, clear)

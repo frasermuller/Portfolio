@@ -16,8 +16,9 @@ export const SUN = new THREE.Vector3(-0.85, 0.2, 0.48).normalize()
 
 export const COLORS = {
   whiteout: '#d9dce6',
-  horizon: '#d8e3f2', // a cool haze that distant mountains fade into
-  middle: '#bcd0ee',
-  top: '#5677b5',
+  horizon: '#dbe4f0', // a cool haze that distant mountains fade into
+  middle: '#7ea2dc', // clear blue a little way up
+  top: '#2c529c', // deep blue overhead
   sun: '#fff1d9',
+  glow: '#ffc58f', // the warm wash low in the sky around the sun
 }

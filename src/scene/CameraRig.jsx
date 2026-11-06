@@ -16,6 +16,8 @@ const gaze = new THREE.Vector3()
 // Extra head turn from dragging, on top of wherever the shot is aimed.
 const drag = { yaw: 0, pitch: 0 }
 const lens = { fov: shots.top.fov }
+// Dev only: poke the camera from the browser console (rig.pos.set(...), rig.look.set(...)) to check a view.
+if (import.meta.env.DEV) window.rig = { pos, look, drag, lens }
 
 // Which way the camera faces to see a point: yaw is left-right, pitch is up-down.
 function headAngles(target, from = pos) {

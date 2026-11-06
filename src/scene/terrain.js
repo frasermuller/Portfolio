@@ -280,9 +280,9 @@ export const shots = {
     ground(THREE.MathUtils.lerp(BOARD.x, OFF.x, 0.3), THREE.MathUtils.lerp(BOARD.z, OFF.z, 0.3), 0.85),
     ground(BOARD.x, BOARD.z, 0.75),
   ),
-  // Sitting on the bench at the end of the deck, looking out a touch right and tipped down ~21°: the main run, the valley
+  // Sitting on the bench at the end of the deck, looking out a touch right and tipped down ~15°: the main run, the valley
   // and the lake, the ranges, and the low sun up in the right corner (drag to look around).
-  view: shot(seated, seated.clone().add(new THREE.Vector3(Math.cos(DECK.angle + 0.1), -0.38, Math.sin(DECK.angle + 0.1)).multiplyScalar(100)), 62),
+  view: shot(seated, seated.clone().add(new THREE.Vector3(Math.cos(DECK.angle + 0.1), -0.27, Math.sin(DECK.angle + 0.1)).multiplyScalar(100)), 66),
   about: shot(ground(-80, 150, 12), ground(-30, 110, 6)),
   projects: shot(ground(90, 60, 20), ground(20, 20, 10)),
   experience: shot(ground(-70, -40, 18), ground(-15, -60, 12)),
