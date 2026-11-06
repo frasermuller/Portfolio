@@ -227,7 +227,7 @@ const liftAt = (t) => [THREE.MathUtils.lerp(LIFT_BOTTOM.x, LIFT_TOP.x, t), THREE
 // towers, clears the ground by 5 across the whole span (less right by the stations, where it comes down to load).
 // The Blender chairlift will stand its towers on these spots.
 const SPANS = 11
-const SEAT = 1 // how high you sit above the snow in a station
+const SEAT = 0.68 // your eye height sitting on the chair as it skims the snow in a station
 export const TOWERS = Array.from({ length: SPANS - 1 }, (_, i) => {
   const [x, z] = liftAt((i + 1) / SPANS)
   return { x, z, ground: heightAt(x, z), height: 7 }

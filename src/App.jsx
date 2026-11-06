@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { AnimatePresence, motion } from 'motion/react'
 import Mountain from './scene/Mountain.jsx'
@@ -10,6 +10,7 @@ import Sky from './scene/Sky.jsx'
 import Clouds from './scene/Clouds.jsx'
 import Rocks from './scene/Rocks.jsx'
 import Markers from './scene/Markers.jsx'
+import Chairlift from './scene/Chairlift.jsx'
 import Backdrop from './scene/Backdrop.jsx'
 import TopStation from './scene/TopStation.jsx'
 import TrailBoard from './scene/TrailBoard.jsx'
@@ -42,6 +43,10 @@ function App() {
         <Mountain />
         <Rocks />
         <Markers />
+        {/* The lift model loads from a file; the rest of the scene doesn't wait for it. */}
+        <Suspense fallback={null}>
+          <Chairlift />
+        </Suspense>
         <Trees />
         <Clouds />
         <Snow />

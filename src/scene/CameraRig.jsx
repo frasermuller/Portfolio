@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import * as THREE from 'three'
 import { ground, liftLine, shots, smoothstep } from './terrain.js'
+import { ride as lift } from './lift.js'
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const RIDE_SECONDS = 26 // hold the button to go 5x faster
@@ -74,7 +75,9 @@ export default function CameraRig({ shot, skip, speed, onArrive }) {
     const progress = { t: 0 }
     const place = () => {
       liftLine.getPointAt(progress.t, pos)
+      lift.t = progress.t // the chairs on the cable move with you
       // Face up the lift line but keep your head fairly level: staring straight up the cable is mostly sky.
+      // (Drag down to see your legs and skis.)
       const heading = liftLine.getTangentAt(progress.t)
       aim(Math.atan2(heading.x, heading.z), THREE.MathUtils.clamp(Math.asin(heading.y) * 0.4 - 0.1, -0.4, 0.12))
     }
@@ -100,11 +103,11 @@ export default function CameraRig({ shot, skip, speed, onArrive }) {
         t: 1,
         duration: 3.6,
         ease: 'power2.out', // a push off the chair, then easing to a stop
-        onStart: () => {
-          from = headAngles(look)
-          to = headAngles(shots.top.look, shots.top.camera)
-        },
         onUpdate: () => {
+          // Where your head was pointing when you got off, and where it ends up (worked out on the first update,
+          // which also covers skipping straight to the end).
+          from ??= headAngles(look)
+          to ??= headAngles(shots.top.look, shots.top.camera)
           ramp.getPointAt(off.t, pos)
           // Knees bend as you push off the chair.
           pos.y -= Math.sin(Math.min(off.t / 0.2, 1) * Math.PI) * 0.15
