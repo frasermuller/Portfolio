@@ -1,0 +1,23 @@
+.app {
+  position: relative;
+  height: 100%;
+}
+
+.scene {
+  position: absolute !important;
+  inset: 0;
+}
+
+.overlay {
+  position: absolute;
+  top: var(--margin);
+  left: var(--margin);
+  right: var(--margin);
+  /* Let drags fall through to the canvas except on the text itself. */
+  pointer-events: none;
+}
+
+.overlay p {
+  margin-top: 16px;
+  max-width: 36ch;
+}
