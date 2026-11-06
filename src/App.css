@@ -35,7 +35,7 @@
 }
 
 .sign,
-.skip {
+.corner {
   font: 600 var(--step-body) / 1 var(--font-text);
   border: 0;
   cursor: pointer;
@@ -56,7 +56,7 @@
 }
 
 .sign:focus-visible,
-.skip:focus-visible {
+.corner:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
@@ -92,7 +92,7 @@
   clip-path: polygon(50% 0, 100% 45%, 100% 100%, 0 100%, 0 45%);
 }
 
-.skip {
+.corner {
   position: absolute;
   right: var(--margin);
   bottom: var(--margin);
@@ -111,4 +111,18 @@
   .sign {
     padding: 10px 14px 10px 12px;
   }
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: var(--margin);
+  translate: -50% 0;
+  max-width: calc(100% - 2 * var(--margin));
+  padding: 10px 16px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  font-size: var(--step-small);
+  text-align: center;
+  pointer-events: none;
 }

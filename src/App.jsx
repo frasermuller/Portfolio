@@ -10,11 +10,11 @@ import Sky from './scene/Sky.jsx'
 import Clouds from './scene/Clouds.jsx'
 import Rocks from './scene/Rocks.jsx'
 import Backdrop from './scene/Backdrop.jsx'
+import TopStation from './scene/TopStation.jsx'
 import './App.css'
 
 // The signpost. Each sign is a place on the mountain, marked the way real trail signs are.
 const SIGNS = [
-  { shot: 'top', name: 'Summit', symbol: 'summit' },
   { shot: 'about', name: 'About me', symbol: 'green' },
   { shot: 'projects', name: 'Projects', symbol: 'blue' },
   { shot: 'experience', name: 'Experience', symbol: 'black' },
@@ -31,7 +31,7 @@ function App() {
 
   return (
     <main className="app">
-      <Canvas className="scene" camera={{ fov: 38, near: 0.5, far: 2600 }} dpr={[1, 2]} shadows>
+      <Canvas className="scene" camera={{ fov: 48, near: 0.1, far: 2600 }} dpr={[1, 2]} shadows>
         <Atmosphere />
         <Sky />
         <Backdrop />
@@ -40,6 +40,7 @@ function App() {
         <Trees />
         <Clouds />
         <Snow />
+        <TopStation onBoard={() => setShot('board')} onBench={() => setShot('view')} />
         <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
 
@@ -52,12 +53,18 @@ function App() {
             transition={{ ...spring, delay: 0.1 }}
           >
             <h1>Fraser Muller</h1>
-            <p>Developer. Pick a run.</p>
           </motion.header>
         )}
       </AnimatePresence>
 
-      {arrived && (
+      {/* Placeholder UI until the real board menu exists: the trail list only shows once you're at the board. */}
+      {arrived && shot === 'top' && (
+        <motion.p className="hint" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: 0.6 }}>
+          Trail map on the board to your right. The view's on your left. Drag to look around.
+        </motion.p>
+      )}
+
+      {arrived && shot !== 'top' && shot !== 'view' && (
         <nav className="signpost" aria-label="Sections">
           {SIGNS.map((sign, i) => (
             <motion.button
@@ -67,7 +74,7 @@ function App() {
               onClick={() => setShot(sign.shot)}
               initial={{ opacity: 0, x: -24 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ ...spring, delay: 0.3 + i * 0.07 }}
+              transition={{ ...spring, delay: 0.1 + i * 0.07 }}
               whileHover={{ x: 6 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -78,8 +85,14 @@ function App() {
         </nav>
       )}
 
+      {arrived && shot !== 'top' && (
+        <button className="corner" onClick={() => setShot('top')}>
+          Back to the top
+        </button>
+      )}
+
       {!arrived && (
-        <button className="skip" onClick={() => setSkip(true)}>
+        <button className="corner" onClick={() => setSkip(true)}>
           Skip the ride
         </button>
       )}
