@@ -12,6 +12,7 @@ import Rocks from './scene/Rocks.jsx'
 import Markers from './scene/Markers.jsx'
 import Backdrop from './scene/Backdrop.jsx'
 import TopStation from './scene/TopStation.jsx'
+import SummitProps from './scene/SummitProps.jsx'
 import './App.css'
 
 // The signpost. Each sign is a place on the mountain, marked the way real trail signs are.
@@ -43,6 +44,7 @@ function App() {
         <Clouds />
         <Snow />
         {/* The board and bench only respond once you're off the lift, so a click can't fight the intro. */}
+        <SummitProps />
         <TopStation onBoard={() => arrived && setShot('board')} onBench={() => arrived && setShot('view')} />
         <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
