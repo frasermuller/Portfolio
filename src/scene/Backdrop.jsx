@@ -31,7 +31,7 @@ function buildBackdrop() {
   geometry.computeVertexNormals()
 
   // Snow with rock on the steep faces, lit once here (sunny side brighter), then washed toward the haze colour:
-  // a little nearby, almost completely at the horizon. Baking it in means the material needs no lighting or fog.
+  // a fair bit even on the nearest ranges, almost completely at the horizon. Baking it in means the material needs no lighting or fog.
   const colors = []
   for (let i = 0; i < position.count; i++) {
     const x = position.getX(i)
@@ -41,7 +41,7 @@ function buildBackdrop() {
     const rock = smoothstep(0.72 + wobble, 0.55 + wobble, normal.y)
     const sunlit = 0.7 + 0.3 * Math.max(normal.dot(SUN), 0)
     const distance = smoothstep(550, 1900, Math.hypot(x, z))
-    color.copy(SNOW).lerp(ROCK, rock).multiplyScalar(sunlit).lerp(haze, 0.2 + 0.7 * distance)
+    color.copy(SNOW).lerp(ROCK, rock).multiplyScalar(sunlit).lerp(haze, 0.4 + 0.55 * distance)
     colors.push(color.r, color.g, color.b)
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
