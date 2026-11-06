@@ -77,7 +77,9 @@ Each milestone is a few small commits. Claude builds it and explains how it work
 
 0. ✅ **Fresh start.** Vite 8, the packages, fonts and palette.
 1. ✅ **First canvas.** `<Canvas>`, lights, fog, and orbiting with `<CameraControls>`.
-2. 🟡 **The mountain.** A flat plane pushed up with ridged noise, flat-shaded triangles, and snow or rock by height (`src/scene/Mountain.jsx`). Next: shape it so the runs have somewhere to go, and decide on a floating island or a fade into fog.
+2. ✅ **The mountain.** A 1000-unit world with a horned summit, ridged noise, distant ranges and pine forests, all dissolving into a dusk whiteout. Snow sticks to the flatter faces and cliffs stay rock (`src/scene/terrain.js`).
+   - Camera on rails, no free orbiting. The intro rides the chairlift up out of thick fog, and the fog thins as you climb. Each sign then flies the camera to a preset shot, arcing up so it never cuts through the mountain (`src/scene/CameraRig.jsx`).
+   - To move a shot, change its `around(angle, distance, height)` numbers in `terrain.js`.
 3. **The look.** Toon lighting, fog, sky gradient, outlines, falling snow. Learn: materials, lights, postprocessing, particles.
 4. **Blender pass.** Model the lodge, lift, trees and signs, export `.glb`, and turn them into components with `gltfjsx`. Learn: the 3D asset pipeline.
 5. **Interaction.** Hover and click run signs, the camera flies down the run (GSAP), and a panel springs in (Motion). Learn: raycasting, timelines, springs.
