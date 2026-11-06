@@ -18,7 +18,7 @@ export default function Atmosphere() {
     scene.fog.density = lerp(0.017, 0.0032, clear)
     scene.fog.color.lerpColors(whiteout, horizon, clear)
     // Under the clouds the light is flat and grey. Above, the low sun takes over.
-    sun.current.intensity = lerp(0.4, 2.8, clear)
+    sun.current.intensity = lerp(0.4, 2.4, clear)
     sky.current.intensity = lerp(1.5, 1.0, clear)
   })
 

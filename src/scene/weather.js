@@ -1,16 +1,18 @@
 import * as THREE from 'three'
+import { toWorldHeight } from './terrain.js'
 
-// The cloud layer sits across the valleys. Below it: whiteout and heavy snow. Above it: a clear sunset.
-export const CLOUD_BASE = 30
-export const CLOUD_TOP = 46
+// A winter inversion: cloud fills the valleys up to about 1450 m, like the real Okanagan.
+// Below it: whiteout and heavy snow. Above it: a clear sunset.
+export const CLOUD_BASE = toWorldHeight(1250)
+export const CLOUD_TOP = toWorldHeight(1450)
 
 // 0 when the camera is under the clouds, 1 once it's above them, blending in between.
 export function clearness(y) {
   return THREE.MathUtils.smoothstep(y, CLOUD_BASE + 4, CLOUD_TOP + 8)
 }
 
-// The sun sits low in the west-southwest, behind the lift, so it lights the peak pink (alpenglow).
-export const SUN = new THREE.Vector3(-1, 0.12, 0.3).normalize()
+// The sun sits low behind the lift, so the face of the horn you ride toward glows pink (alpenglow).
+export const SUN = new THREE.Vector3(0.87, 0.14, -0.5).normalize()
 
 export const COLORS = {
   whiteout: '#d9d3e4',

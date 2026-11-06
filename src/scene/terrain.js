@@ -1,11 +1,35 @@
 import * as THREE from 'three'
+import { SIZE as MAP_SIZE, AREA, DATA } from './heightmap.js'
 
-// The whole world is one big patch of ground, far bigger than the camera ever sees.
+// The world is the real 16 km square around Silver Star's summit, squeezed into 1000 units (16 m per unit).
 const HALF = 500
-const SEGMENTS = 360 // ~2.8 units per triangle: still chunky and low-poly, but with enough detail to read as a real mountain
-export const PEAK = 110
+const METRES_PER_UNIT = AREA / (HALF * 2)
+const SEGMENTS = 360 // ~2.8 units (45 m) per triangle
+// Real heights, stretched up 2.2x. Silver Star is a gentle dome; this makes it read as a proper mountain.
+const VERTICAL = 2.2
+const VALLEY_FLOOR = 384 // metres, the lowest point in the square (the Okanagan valley)
 
-// Pseudo-random 0..1 from a grid point. Same input, same output, so the mountain never changes between reloads.
+// The heightmap arrives as text (base64); unpack it into one height per grid point, in decimetres.
+const heights = new Uint16Array(Uint8Array.from(atob(DATA), (c) => c.charCodeAt(0)).buffer)
+
+// Real elevation in metres at any world (x, z), blending between the four nearest grid points.
+function elevation(x, z) {
+  const gx = THREE.MathUtils.clamp(((x + HALF) / (HALF * 2)) * MAP_SIZE - 0.5, 0, MAP_SIZE - 1.001)
+  const gz = THREE.MathUtils.clamp(((z + HALF) / (HALF * 2)) * MAP_SIZE - 0.5, 0, MAP_SIZE - 1.001)
+  const ix = Math.floor(gx)
+  const iz = Math.floor(gz)
+  const fx = gx - ix
+  const fz = gz - iz
+  const at = (i, j) => heights[j * MAP_SIZE + i] / 10
+  const top = at(ix, iz) * (1 - fx) + at(ix + 1, iz) * fx
+  const bottom = at(ix, iz + 1) * (1 - fx) + at(ix + 1, iz + 1) * fx
+  return top * (1 - fz) + bottom * fz
+}
+
+// Turn real metres above sea level into world height (units above the valley floor).
+export const toWorldHeight = (metres) => ((metres - VALLEY_FLOOR) / METRES_PER_UNIT) * VERTICAL
+
+// Pseudo-random 0..1 from a grid point. Same input, same output, so nothing reshuffles between reloads.
 export function hash(x, y) {
   const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453
   return s - Math.floor(s)
@@ -27,7 +51,7 @@ function noise(x, y) {
 }
 
 // Big bumps plus smaller and smaller ones on top. Each layer is twice as fine and turned ~37°,
-// otherwise the noise's square grid shows through as ridges running dead straight along x and z.
+// otherwise the noise's square grid shows through as features running dead straight along x and z.
 function layered(x, y, octaves, shape) {
   let total = 0
   let amplitude = 0.5
@@ -51,72 +75,86 @@ function smoothstep(edge0, edge1, x) {
   return t * t * (3 - 2 * t)
 }
 
-// Ground height at any world (x, z). The camera, the lift and the trees all use this to sit on the slope.
-export function heightAt(x, z) {
-  const d = Math.hypot(x * 1.1, z * 0.85)
-  // An exponent below 2 gives a pointy summit instead of a rounded dome.
-  const massif = PEAK * Math.exp(-((d / 95) ** 1.4))
-  const mountain = massif * (0.45 + 0.75 * ridged(x * 0.011, z * 0.011))
-  // A sharp horn on top, so the summit reads as a peak and not a lump.
-  const horn = 38 * Math.exp(-((Math.hypot(x - 10, z - 28) / 26) ** 1.2))
-  // A ring of big far-off ranges, so the mountain sits in a real landscape instead of on its own.
-  const range = 120 * ridged(x * 0.004 + 7, z * 0.004 - 3) ** 1.5 * smoothstep(250, 400, Math.hypot(x, z))
-  const bumps = fbm(x * 0.04, z * 0.04) * 3
-  return mountain + range + horn + bumps
+// The horn: a Matterhorn-style peak rising out of Silver Star's summit. Real Silver Star is the ski hill below it.
+function horn(x, z) {
+  // Turn ~20° so the four ridges don't line up with north/south/east/west.
+  const u = x * 0.94 - z * 0.34
+  const v = x * 0.34 + z * 0.94
+  // Halfway between a circle and a diamond: the diamond's corners become four sharp ridges.
+  const d = 0.5 * (Math.abs(u) + Math.abs(v)) + 0.5 * Math.hypot(u, v)
+  const body = Math.max(0, 1 - d / 125) ** 1.7
+  // The very top leans off-centre, like the Matterhorn's hooked summit.
+  const tip = Math.max(0, 1 - Math.hypot(x + 9, z + 6) / 45) ** 1.3
+  // Gullies and buttresses down the faces, plus smaller knobbly rock on top of those.
+  const crags = 0.8 + 0.4 * ridged(x * 0.045, z * 0.045)
+  const knobs = body * 16 * (ridged(x * 0.11, z * 0.11) - 0.5)
+  return (100 * body + 45 * tip) * crags + knobs
 }
 
-const SNOW = new THREE.Color('#f6f3fb')
-const ROCK = [new THREE.Color('#6f6f9c'), new THREE.Color('#5d5d8a')]
+// Jagged ranges around the edge of the map, poking up through the sea of cloud.
+function ranges(x, z) {
+  return 130 * ridged(x * 0.0045 + 7, z * 0.0045 - 3) ** 1.6 * smoothstep(280, 430, Math.hypot(x, z))
+}
+
+// Ground height at any world (x, z): real Silver Star, the horn on top, the ranges around,
+// plus a little lumpiness the 40 m data is too coarse to have.
+export function heightAt(x, z) {
+  return toWorldHeight(elevation(x, z)) + horn(x, z) + ranges(x, z) + (fbm(x * 0.08, z * 0.08) - 0.5) * 1.2
+}
+
+const SNOW = new THREE.Color('#f7f5fc')
+const ROCK = new THREE.Color('#231f33') // dark rock on the horn
+const LOW_ROCK = new THREE.Color('#7a7898') // softer grey for the odd outcrop on the ski hill
+const rockColor = new THREE.Color()
 const color = new THREE.Color()
-const a = new THREE.Vector3()
-const b = new THREE.Vector3()
-const c = new THREE.Vector3()
+const normal = new THREE.Vector3()
 
 export function buildTerrain() {
-  // Lay a flat grid down, then lift every point to its height (on the shared corners, before splitting them up).
-  const plane = new THREE.PlaneGeometry(HALF * 2, HALF * 2, SEGMENTS, SEGMENTS).rotateX(-Math.PI / 2)
-  const grid = plane.attributes.position
-  for (let i = 0; i < grid.count; i++) {
-    grid.setY(i, heightAt(grid.getX(i), grid.getZ(i)))
-  }
-
-  // Non-indexed: every triangle owns its 3 corners, so each one can get its own flat colour.
-  const geometry = plane.toNonIndexed()
+  // A flat grid, every point lifted to its height. Kept indexed (corners shared) so shading and colours blend smoothly.
+  const geometry = new THREE.PlaneGeometry(HALF * 2, HALF * 2, SEGMENTS, SEGMENTS).rotateX(-Math.PI / 2)
   const position = geometry.attributes.position
-  const colors = []
-
-  for (let i = 0; i < position.count; i += 3) {
-    a.fromBufferAttribute(position, i)
-    b.fromBufferAttribute(position, i + 1)
-    c.fromBufferAttribute(position, i + 2)
-    const height = (a.y + b.y + c.y) / 3
-    // How flat is this triangle? 1 = flat, 0 = a cliff. Snow only sticks to the flatter faces.
-    const flatness = Math.abs(b.sub(a).cross(c.sub(a)).normalize().y)
-    const isSnow = flatness > 0.66 || (height > 60 && flatness > 0.5)
-    if (isSnow) {
-      // Each snow facet a hair brighter or darker than its neighbours, like wind-packed powder.
-      color.copy(SNOW).multiplyScalar(0.94 + hash(i, 7) * 0.06)
-    } else {
-      color.copy(ROCK[hash(i, 3) > 0.5 ? 0 : 1])
-    }
-    for (let k = 0; k < 3; k++) colors.push(color.r, color.g, color.b)
+  for (let i = 0; i < position.count; i++) {
+    position.setY(i, heightAt(position.getX(i), position.getZ(i)))
   }
-
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
   geometry.computeVertexNormals()
+
+  // Snow everywhere except the steepest faces, which fade to bare rock. Noise wobbles the edge so it's not a clean line.
+  const colors = []
+  for (let i = 0; i < position.count; i++) {
+    const x = position.getX(i)
+    const z = position.getZ(i)
+    normal.fromBufferAttribute(geometry.attributes.normal, i)
+    const wobble = (fbm(x * 0.15, z * 0.15) - 0.5) * 0.12
+    // 0 on the ski hill, 1 high on the horn. Low down only real cliffs show rock; up high the wind strips the snow,
+    // so rock shows through on gentler slopes and it's darker.
+    const high = THREE.MathUtils.smoothstep(position.getY(i), 200, 290)
+    const scoured = THREE.MathUtils.lerp(0.72, 0.95, high)
+    const steep = THREE.MathUtils.smoothstep(scoured + wobble - normal.y, 0, 0.12)
+    // Snow-filled gullies streaking straight down the steep faces, like the Matterhorn's couloirs.
+    // Walking around a circle in noise-space (cos, sin) makes stripes that fan out from the summit, with no seam.
+    const angle = Math.atan2(z - SUMMIT.z, x - SUMMIT.x)
+    const distance = Math.hypot(x - SUMMIT.x, z - SUMMIT.z)
+    const gully = THREE.MathUtils.smoothstep(ridged(Math.cos(angle) * 9 + distance * 0.012, Math.sin(angle) * 9), 0.7, 0.82)
+    const rock = steep * (1 - gully)
+    rockColor.copy(LOW_ROCK).lerp(ROCK, high)
+    color.copy(SNOW).lerp(rockColor, rock)
+    colors.push(color.r, color.g, color.b)
+  }
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
   return geometry
 }
 
-// The highest point: check every spot around the horn and keep the tallest, so tweaking the noise never leaves this stale.
+// The summit: the tip of the horn, found by checking every spot near the middle and keeping the tallest.
 export const SUMMIT = new THREE.Vector3(0, -Infinity, 0)
-for (let x = -30; x <= 50; x++) {
-  for (let z = -10; z <= 70; z++) {
+for (let x = -20; x <= 20; x++) {
+  for (let z = -20; z <= 20; z++) {
     const y = heightAt(x, z)
     if (y > SUMMIT.y) SUMMIT.set(x, y, z)
   }
 }
 
 // A spot on the snow, described from the summit: compass angle, distance out, and height above the ground.
+// Angle 0 points east (+x), 90 south (+z), 180 west, 270 north.
 export function around(angle, distance, up) {
   const radians = THREE.MathUtils.degToRad(angle)
   const x = SUMMIT.x + Math.cos(radians) * distance
@@ -124,15 +162,17 @@ export function around(angle, distance, up) {
   return new THREE.Vector3(x, heightAt(x, z) + up, z)
 }
 
-// The chairlift line: straight up the south ridge from the valley floor to a knoll with a clear view of the peak.
-const LIFT_ANGLE = 100
-const LIFT_BOTTOM = around(LIFT_ANGLE, 240, 0)
-const LIFT_TOP = around(LIFT_ANGLE, 100, 0)
+// The chairlift: a straight line up the east-northeast side, from under the clouds
+// to a knoll at the foot of the horn, so you finish looking up at the peak.
+const LIFT_ANGLE = 330
+const LIFT_FROM = 300
+const LIFT_TO = 190
+const LIFT_BOTTOM = around(LIFT_ANGLE, LIFT_FROM, 0)
+const LIFT_TOP = around(LIFT_ANGLE, LIFT_TO, 0)
 export const liftLine = new THREE.CatmullRomCurve3(
-  Array.from({ length: 24 }, (_, i) => {
-    const t = i / 23
-    // Low over the snow at the bottom, rising to the top station.
-    return around(LIFT_ANGLE, THREE.MathUtils.lerp(240, 100, t), THREE.MathUtils.lerp(8, 25, t ** 3))
+  Array.from({ length: 32 }, (_, i) => {
+    const t = i / 31
+    return around(LIFT_ANGLE, THREE.MathUtils.lerp(LIFT_FROM, LIFT_TO, t), 7)
   }),
 )
 
@@ -144,32 +184,38 @@ function distanceToLift(x, z) {
   return Math.hypot(x - (LIFT_BOTTOM.x + dx * t), z - (LIFT_BOTTOM.z + dz * t))
 }
 
-// Pines in forest patches that climb the lower mountain, placed the same way every load.
-export function treeSpots(max = 1800) {
+// Pines over most of the mountain, in patches with glades between, stopping at the treeline below the horn.
+export function treeSpots(max = 3200) {
   const spots = []
-  for (let i = 0; i < 14000 && spots.length < max; i++) {
+  for (let i = 0; i < 20000 && spots.length < max; i++) {
     const angle = hash(i, 1) * Math.PI * 2
-    const radius = 55 + hash(i, 2) * 300
+    const radius = 60 + Math.sqrt(hash(i, 2)) * 290
     const x = SUMMIT.x + Math.cos(angle) * radius
     const z = SUMMIT.z + Math.sin(angle) * radius
     const y = heightAt(x, z)
     const slope = Math.hypot(heightAt(x + 1, z) - heightAt(x - 1, z), heightAt(x, z + 1) - heightAt(x, z - 1)) / 2
-    // Big slow noise decides where the forests are, leaving open glades between them.
-    const forest = fbm(x * 0.022 + 3, z * 0.022)
-    if (y < 62 && slope < 0.8 && forest > 0.48 && distanceToLift(x, z) > 9) {
-      spots.push({ x, y, z, scale: 0.6 + hash(i, 4) * 0.9, variant: Math.floor(hash(i, 5) * 3) })
+    const forest = fbm(x * 0.03 + 3, z * 0.03)
+    const aboveTreeline = y > toWorldHeight(1880)
+    if (!aboveTreeline && slope < 1 && forest > 0.42 && distanceToLift(x, z) > 7) {
+      // Smallish trees make the mountain feel bigger. tint varies each tree's shade a little.
+      spots.push({ x, y, z, scale: 0.45 + hash(i, 4) * 0.55, tint: 0.88 + hash(i, 6) * 0.2, variant: Math.floor(hash(i, 5) * 3) })
     }
   }
   return spots
 }
 
-// Each place the camera can go: where it sits, and what it looks at.
-// Cameras sit either under the cloud layer (cosy whiteout) or above it (sunset), never inside it.
+// A camera spot for a section: stand further out from the summit than the spot and look back toward it,
+// level rather than up the slope, so the horizon stays in frame.
+function view(angle, distance, back, up) {
+  return { camera: around(angle, distance + back, up), look: around(angle, distance, up * 0.6) }
+}
+
+// Each place the camera can go. All sit above the cloud layer for now; the base areas come with the runs.
 export const shots = {
-  // Aim below the tip so the peak sits high in the frame, towering over you.
-  top: { camera: liftLine.getPointAt(1), look: SUMMIT.clone().setY(SUMMIT.y - 30) },
-  about: { camera: around(115, 215, 12), look: around(105, 175, 2) },
-  projects: { camera: around(30, 130, 45), look: around(20, 60, 10) },
-  experience: { camera: around(340, 150, 45), look: around(350, 35, 0) },
-  contact: { camera: around(85, 235, 10), look: around(95, 205, 3) },
+  // Top of the lift: looking up at the horn, aimed below the tip so it towers over the frame.
+  top: { camera: liftLine.getPointAt(1), look: SUMMIT.clone().setY(SUMMIT.y - 70) },
+  about: view(200, 150, 50, 18),
+  projects: view(80, 150, 50, 22),
+  experience: view(330, 140, 50, 25),
+  contact: view(250, 160, 40, 15),
 }

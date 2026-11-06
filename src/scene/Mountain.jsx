@@ -5,8 +5,9 @@ export default function Mountain() {
   const geometry = useMemo(() => buildTerrain(), [])
 
   return (
+    // Smooth shading (no flatShading) for the soft, snowy look.
     <mesh geometry={geometry}>
-      <meshStandardMaterial vertexColors flatShading roughness={0.95} />
+      <meshStandardMaterial vertexColors roughness={1} />
     </mesh>
   )
 }

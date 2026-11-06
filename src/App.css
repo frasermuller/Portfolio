@@ -11,6 +11,8 @@
 
 .overlay {
   position: absolute;
+  /* The title only appears above the clouds, against the evening sky, so it's set in snow white. */
+  color: var(--plate-ink);
   top: var(--margin);
   left: var(--margin);
   right: var(--margin);
