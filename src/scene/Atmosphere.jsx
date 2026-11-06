@@ -11,6 +11,7 @@ const lerp = THREE.MathUtils.lerp
 export default function Atmosphere() {
   const sun = useRef()
   const sky = useRef()
+  const shadowFrames = useRef(0)
 
   // The sun's shadows cover the whole mountain: a 900-unit box looking down the sun's direction.
   useLayoutEffect(() => {
@@ -19,11 +20,19 @@ export default function Atmosphere() {
     Object.assign(shadow.camera, { left: -450, right: 450, top: 450, bottom: -450, near: 1, far: 1600 })
     shadow.camera.updateProjectionMatrix()
     // Nudge the shadows off the surface they're cast from, so slopes don't speckle themselves (shadow acne).
-    shadow.bias = -0.0004
-    shadow.normalBias = 1.4
+    // normalBias is in world units: keep it near one shadow-map texel (~0.22) or small things stop casting shadows.
+    shadow.bias = -0.0006
+    shadow.normalBias = 0.3
   }, [])
 
-  useFrame(({ camera, scene }) => {
+  useFrame(({ camera, scene, gl }) => {
+    // Nothing that casts a shadow ever moves, so draw the shadow map for the first few frames
+    // (once everything has been placed) and then stop redrawing it every frame.
+    if (shadowFrames.current < 3) {
+      gl.shadowMap.autoUpdate = false
+      gl.shadowMap.needsUpdate = true
+      shadowFrames.current++
+    }
     const clear = clearness(camera.position.y)
     // Thick fog under the clouds. Above them, just enough haze to soften the far side of the mountain.
     scene.fog.density = lerp(0.017, 0.0013, clear)
