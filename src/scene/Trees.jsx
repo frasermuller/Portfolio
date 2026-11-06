@@ -32,11 +32,23 @@ function pine(tiers) {
   return mergeGeometries([trunk, ...cones])
 }
 
-// Three kinds, so the forest doesn't look stamped out: [radius, height, where the tier starts].
+// A dead tree: a bare grey trunk with a few stubby branches sticking out.
+function snag() {
+  const wood = new THREE.Color('#7b7068')
+  const parts = [new THREE.CylinderGeometry(0.18, 0.4, 7, 5).translate(0, 3.5, 0)]
+  for (const [y, turn, length] of [[3, 0.4, 1.6], [4.4, 2.6, 1.3], [5.6, 4.6, 1]]) {
+    parts.push(new THREE.CylinderGeometry(0.06, 0.12, length, 4).rotateZ(1.1).translate(length * 0.4, y, 0).rotateY(turn))
+  }
+  return mergeGeometries(parts.map((part) => paint(part, () => wood)))
+}
+
+// Five kinds, so the forest doesn't look stamped out. Tiers are [radius, height, where the tier starts].
 const KINDS = [
-  pine([[2.0, 3.6, 1.2], [1.5, 3.0, 3.4], [1.0, 2.6, 5.4]]), // tall skinny spruce
+  pine([[2.0, 3.6, 1.2], [1.5, 3.0, 3.4], [1.0, 2.6, 5.4]]), // spruce
   pine([[2.8, 3.4, 1.0], [2.1, 3.0, 3.0], [1.3, 2.6, 4.8]]), // big round fir
   pine([[1.6, 2.6, 0.8], [1.0, 2.0, 2.2]]), // little one
+  pine([[1.5, 2.4, 1.6], [1.25, 2.2, 3.2], [1.0, 2.0, 4.7], [0.75, 1.8, 6.1], [0.45, 1.6, 7.4]]), // tall slender spruce
+  snag(),
 ]
 
 function Forest({ geometry, spots }) {
@@ -59,7 +71,7 @@ function Forest({ geometry, spots }) {
 
   // One draw call per kind: an instanced mesh stamps the same tree out hundreds of times.
   return (
-    <instancedMesh ref={ref} args={[geometry, null, spots.length]}>
+    <instancedMesh ref={ref} args={[geometry, null, spots.length]} castShadow receiveShadow>
       <meshStandardMaterial vertexColors flatShading roughness={1} />
     </instancedMesh>
   )
