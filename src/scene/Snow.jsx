@@ -43,6 +43,14 @@ export default function Snow() {
       positions[i3] = wrap(positions[i3] + Math.sin(time * 0.6 + i) * 0.5 * delta, camera.position.x)
       positions[i3 + 1] = wrap(positions[i3 + 1] - FALL * (0.7 + (i % 7) * 0.1) * delta, camera.position.y)
       positions[i3 + 2] = wrap(positions[i3 + 2], camera.position.z)
+      // A flake right against the lens would fill the screen, so bump any that close back up into the sky.
+      if (
+        Math.abs(positions[i3] - camera.position.x) < 1.5 &&
+        Math.abs(positions[i3 + 1] - camera.position.y) < 1.5 &&
+        Math.abs(positions[i3 + 2] - camera.position.z) < 1.5
+      ) {
+        positions[i3 + 1] += HALF
+      }
     }
     ref.current.geometry.attributes.position.needsUpdate = true
     // Heavy snow under the clouds, just a few stray flakes up in the sunset.

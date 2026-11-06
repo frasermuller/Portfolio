@@ -20,7 +20,7 @@ export default function Atmosphere() {
     shadow.camera.updateProjectionMatrix()
     // Nudge the shadows off the surface they're cast from, so slopes don't speckle themselves (shadow acne).
     shadow.bias = -0.0004
-    shadow.normalBias = 0.6
+    shadow.normalBias = 1.4
   }, [])
 
   useFrame(({ camera, scene }) => {

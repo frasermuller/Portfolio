@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import * as THREE from 'three'
@@ -12,10 +12,13 @@ const RIDE_SECONDS = 11
 const pos = new THREE.Vector3()
 const look = new THREE.Vector3()
 const sway = new THREE.Vector2()
+const gaze = new THREE.Vector3()
+// Extra head turn from dragging, on top of wherever the shot is aimed.
+const drag = { yaw: 0, pitch: 0 }
 
 // Which way the camera faces to see a point: yaw is left-right, pitch is up-down.
-function headAngles(target) {
-  const direction = target.clone().sub(pos).normalize()
+function headAngles(target, from = pos) {
+  const direction = target.clone().sub(from).normalize()
   return { yaw: Math.atan2(direction.x, direction.z), pitch: Math.asin(direction.y) }
 }
 
@@ -32,6 +35,28 @@ export default function CameraRig({ shot, skip, onArrive }) {
   const ride = useRef()
   const flight = useRef()
   const current = useRef('top') // where the camera is now (the intro already ends at the top)
+  const canvas = useThree((state) => state.gl.domElement)
+
+  // Drag anywhere to look around (like turning your head), within limits.
+  useEffect(() => {
+    let last = null
+    const down = (e) => (last = { x: e.clientX, y: e.clientY })
+    const up = () => (last = null)
+    const move = (e) => {
+      if (!last) return
+      drag.yaw = THREE.MathUtils.clamp(drag.yaw + (e.clientX - last.x) * 0.004, -1.7, 1.7)
+      drag.pitch = THREE.MathUtils.clamp(drag.pitch + (e.clientY - last.y) * 0.004, -0.7, 0.6)
+      last = { x: e.clientX, y: e.clientY }
+    }
+    canvas.addEventListener('pointerdown', down)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointermove', move)
+    return () => {
+      canvas.removeEventListener('pointerdown', down)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointermove', move)
+    }
+  }, [canvas])
 
   // The intro: ride the chairlift up out of the whiteout, then turn around at the top to take in the view.
   // (The fog thins by itself as you climb, see Atmosphere.)
@@ -43,25 +68,31 @@ export default function CameraRig({ shot, skip, onArrive }) {
     }
     place()
 
-    // Turning your head: blend the left-right angle and the up-down angle, rather than the point you look at,
-    // so a big turn sweeps around smoothly instead of swinging through your feet.
-    const turn = { t: 0 }
+    // Getting off: glide off the chair onto the platform while turning your head to face the view.
+    // The turn blends the left-right and up-down angles rather than the point you look at, so a big turn
+    // sweeps around smoothly instead of swinging through your feet.
+    const off = { t: 0 }
+    let start
     let from
     let to
     ride.current = gsap
       .timeline({ onComplete: onArrive })
       .to(progress, { t: 1, duration: RIDE_SECONDS, ease: 'sine.inOut', onUpdate: place })
-      .to(turn, {
+      .to(off, {
         t: 1,
         duration: 2.4,
         ease: 'power2.inOut',
         onStart: () => {
+          start = pos.clone()
           from = headAngles(look)
-          to = headAngles(shots.top.look)
+          to = headAngles(shots.top.look, shots.top.camera)
           // Go the short way round.
           to.yaw = from.yaw + Math.atan2(Math.sin(to.yaw - from.yaw), Math.cos(to.yaw - from.yaw))
         },
-        onUpdate: () => aim(THREE.MathUtils.lerp(from.yaw, to.yaw, turn.t), THREE.MathUtils.lerp(from.pitch, to.pitch, turn.t)),
+        onUpdate: () => {
+          pos.lerpVectors(start, shots.top.camera, off.t)
+          aim(THREE.MathUtils.lerp(from.yaw, to.yaw, off.t), THREE.MathUtils.lerp(from.pitch, to.pitch, off.t))
+        },
       })
 
     if (reducedMotion) ride.current.progress(1)
@@ -81,12 +112,14 @@ export default function CameraRig({ shot, skip, onArrive }) {
       const from = pos.clone()
       const fromLook = look.clone()
       const { camera: to, look: toLook } = shots[shot]
-      const hop = from.distanceTo(to) * 0.25 + 15
+      const distance = from.distanceTo(to)
+      const hop = distance * 0.25 // a big arc for long flights, barely any for a few steps across the platform
       const progress = { t: 0 }
+      gsap.to(drag, { yaw: 0, pitch: 0, duration: 1.2, ease: 'power2.out' }) // face where the new shot points
 
       flight.current = gsap.to(progress, {
         t: 1,
-        duration: reducedMotion ? 0.01 : 2.6,
+        duration: reducedMotion ? 0.01 : THREE.MathUtils.clamp(distance / 40, 1.2, 2.6),
         ease: 'power3.inOut',
         onUpdate: () => {
           pos.lerpVectors(from, to, progress.t)
@@ -99,13 +132,15 @@ export default function CameraRig({ shot, skip, onArrive }) {
   )
 
   useFrame((state, delta) => {
-    // The camera leans a little toward the mouse, easing in so it feels alive rather than twitchy.
+    // The view drifts a touch toward the mouse, easing in so it feels alive rather than twitchy,
+    // then the drag turn goes on top.
     sway.lerp(state.pointer, 1 - Math.exp(-delta * 3))
+    const { yaw, pitch } = headAngles(look)
+    const y = yaw + drag.yaw - sway.x * 0.03
+    const p = THREE.MathUtils.clamp(pitch + drag.pitch + sway.y * 0.02, -1.3, 1.3)
+    gaze.set(pos.x + Math.sin(y) * Math.cos(p), pos.y + Math.sin(p), pos.z + Math.cos(y) * Math.cos(p))
     state.camera.position.copy(pos)
-    state.camera.lookAt(look)
-    state.camera.translateX(sway.x * 2.5)
-    state.camera.translateY(sway.y * 1.2)
-    state.camera.lookAt(look)
+    state.camera.lookAt(gaze)
   })
 
   return null

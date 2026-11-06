@@ -10,8 +10,9 @@ export function clearness(y) {
   return THREE.MathUtils.smoothstep(y, CLOUD_BASE + 4, CLOUD_TOP + 8)
 }
 
-// Golden hour: the sun is low in the southwest, lighting the south face and throwing long shadows up the mountain.
-export const SUN = new THREE.Vector3(-0.65, 0.38, 0.66).normalize()
+// Late golden hour: the sun is low in the west-southwest, glowing off to the side of the view from the bench
+// and throwing long shadows across the south face.
+export const SUN = new THREE.Vector3(-0.85, 0.2, 0.48).normalize()
 
 export const COLORS = {
   whiteout: '#d9dce6',
