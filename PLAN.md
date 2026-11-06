@@ -4,7 +4,9 @@ A small 3D world you can spin around and click into. Each part of the portfolio 
 
 ## Two concepts
 
-### A: Trail Map (ski hill) (my pick)
+**Picked: Trail Map.** Golf is kept below as the backup idea.
+
+### A: Trail Map (ski hill)
 
 A low-poly snowy mountain styled like the hand-painted trail maps at the bottom of every chairlift. Your fonts (Architects Daughter) become the hand-lettered run labels.
 
@@ -53,11 +55,8 @@ Skipped: Theatre.js (no release since 2024; GSAP covers it). Spline (fast, but h
 These are all built by the library authors or the community, not Claude defaults.
 
 1. **Blender** (free, [blender.org](https://www.blender.org/download/)): **you install it.** We model the lodge, lift towers, trees and signs here, then export them as `.glb`.
-2. **Blender connector:** Anthropic shipped an official Blender MCP in April 2026 that lets me drive Blender's Python API. Once Blender is installed, turn it on in the Claude app under Settings → Connectors, or I can add the community one ([ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp)). You approve each script it runs.
-3. **GSAP's official skills** ([greensock/gsap-skills](https://github.com/greensock/gsap-skills)): written by the GSAP team, so the animation code follows their best practices.
-   ```
-   /plugin marketplace add greensock/gsap-skills
-   ```
+2. **Blender connector** ✅: the official Blender MCP add-on (from Blender Lab) lets me drive Blender's Python API. You approve each script it runs. To reconnect, open Blender, press N in the 3D view, and check the MCP tab.
+3. **GSAP's official skills** ✅ ([greensock/gsap-skills](https://github.com/greensock/gsap-skills)): written by the GSAP team, so the animation code follows their best practices.
 4. **Already set up:** Context7 (live library docs, so no outdated APIs), the Figma connector (we can sketch the UI panels there first), the built-in browser (I screenshot and check the site as we go), and `design-taste-frontend` (an anti-generic design checklist built from studying award-winning sites).
 5. **Free CC0 assets** for anything we don't model ourselves: [Kenney](https://kenney.nl/assets), [Quaternius](https://quaternius.com), [Poly Pizza](https://poly.pizza), and [Poly Haven](https://polyhaven.com) for sky/lighting maps.
 6. **Hosting:** Vercel (free, deploys on every push to GitHub).
