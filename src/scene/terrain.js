@@ -3,7 +3,7 @@ import * as THREE from 'three'
 // One mountain, laid out on purpose: a long climb from a frozen lake and village to a summit platform,
 // one main run snaking down the face, a few cliff bands, and ranges around it. 1 unit is about 2 m.
 const HALF = 500 // the world is 1000 x 1000 units
-const SEGMENTS = 360 // ~2.8 units per triangle
+const SEGMENTS = 440 // ~2.3 units per triangle
 
 export const LAKE = { x: 30, z: 330, radius: 90, level: 3 }
 const PEAK = { x: 0, z: -160, height: 200 }
@@ -94,10 +94,10 @@ export const distanceToRun = (x, z) => runAt(x, z).distance
 
 // Cliff bands, placed by hand: [from x, from z, to x, to z, drop]. The first crosses right under the lift.
 export const CLIFFS = [
-  [4, 52, 62, 64, 9],
-  [-110, -10, -62, -32, 11],
-  [52, -50, 104, -28, 10],
-  [-120, 120, -74, 104, 8],
+  [4, 52, 62, 64, 14],
+  [-110, -10, -62, -32, 16],
+  [52, -50, 104, -28, 15],
+  [-120, 120, -74, 104, 12],
 ]
 
 // The mountain itself: a big body, spurs and bowls, a summit, two side peaks and the ranges around.
@@ -111,9 +111,16 @@ function shape(x, z, rough) {
   const body = Math.exp(-((d / 175) ** 1.5)) * (1 - 0.75 * smoothstep(140, 330, z))
   const spurs = 0.8 + 0.35 * ridged(x * 0.0075 + 3.1, z * 0.0075 - 1.7) * (0.4 + 0.6 * rough)
   let h = PEAK.height * body * spurs
-  h += 26 * Math.exp(-((Math.hypot(dx, dz) / 34) ** 1.3)) // the summit
-  h += 36 * Math.exp(-((Math.hypot(x + 175, z + 110) / 60) ** 1.3)) // west peak
-  h += 30 * Math.exp(-((Math.hypot(x - 185, z + 90) / 55) ** 1.3)) // east peak
+  // The summit and the two side peaks: a broad shoulder each, with a rocky horn on top whose faces are broken up
+  // by ridged noise, so they read as crags rather than domes.
+  const horn = (px, pz, broad, wide, tall, narrow) => {
+    const r = Math.hypot(x - px, z - pz)
+    const crag = 0.65 + 0.55 * ridged(x * 0.06 + px, z * 0.06 + pz)
+    return broad * Math.exp(-((r / wide) ** 1.3)) + tall * Math.exp(-((r / narrow) ** 1.6)) * crag
+  }
+  h += horn(PEAK.x, PEAK.z, 22, 40, 30, 17)
+  h += horn(-175, -110, 30, 70, 42, 28) // west peak
+  h += horn(185, -90, 26, 62, 38, 25) // east peak
   h += fbm(x * 0.01, z * 0.01) * 12 // rolling valley floor
   h += 150 * ridged(x * 0.004 + 7, z * 0.004 - 3) ** 1.7 * smoothstep(300, 470, Math.hypot(x, z)) // ranges
   return h
@@ -128,9 +135,12 @@ function cliffs(h, x, z) {
     const length = Math.hypot(dx, dz)
     const along = ((x - ax) * dx + (z - az) * dz) / (length * length)
     if (along < -0.3 || along > 1.3) continue
-    const across = ((z - az) * dx - (x - ax) * dz) / length // positive on the downhill (south) side
+    // Positive on the downhill (south) side. The edge wanders in and out so it's never a straight line.
+    const across = ((z - az) * dx - (x - ax) * dz) / length - (fbm(along * 5 + ax * 0.1, az * 0.1) - 0.5) * 10
     const ends = smoothstep(-0.25, 0.1, along) * smoothstep(1.25, 0.9, along)
-    h -= drop * (smoothstep(-1.2, 1.2, across) - smoothstep(4, 45, across)) * ends
+    // A main wall, then a smaller second step a little further down.
+    h -= drop * (smoothstep(-1, 1, across) - smoothstep(4, 45, across)) * ends
+    h -= drop * 0.45 * (smoothstep(8, 10, across) - smoothstep(14, 50, across)) * ends
   }
   return h
 }
@@ -168,9 +178,7 @@ export function slopeAt(x, z) {
 
 const SNOW = new THREE.Color('#e1e7f1') // off-piste, a touch cooler than the bright groomed run
 const DRIFT = new THREE.Color('#d2dae8') // wind-packed patches
-const ROCK = new THREE.Color('#4d5a64') // dark slate, like the rock in Lonely Mountains
 const color = new THREE.Color()
-const normal = new THREE.Vector3()
 
 export function buildTerrain() {
   // A flat grid, every point lifted to its height. Kept indexed (corners shared) so shading and colours blend smoothly.
@@ -181,18 +189,15 @@ export function buildTerrain() {
   }
   geometry.computeVertexNormals()
 
-  // Snow sticks to anything gentler than ~45°. Steeper than that is bare rock. Noise wobbles the edge.
-  // The run itself is painted in Mountain's shader, from how far across it each corner is.
+  // Vertex colours are just the snow (with wind-packed patches). Rock and the groomed run are painted in
+  // Mountain's shader: rock from how steep each triangle is, the run from how far across it each corner is.
   const colors = []
   const across = []
   for (let i = 0; i < position.count; i++) {
     const x = position.getX(i)
     const z = position.getZ(i)
-    normal.fromBufferAttribute(geometry.attributes.normal, i)
-    const wobble = (fbm(x * 0.2, z * 0.2) - 0.5) * 0.1
-    const rock = smoothstep(0.74 + wobble, 0.62 + wobble, normal.y)
     const drift = smoothstep(0.5, 0.7, fbm(x * 0.03 + 9, z * 0.03)) * 0.6
-    color.copy(SNOW).lerp(DRIFT, drift).lerp(ROCK, rock)
+    color.copy(SNOW).lerp(DRIFT, drift)
     colors.push(color.r, color.g, color.b)
     across.push(runAt(x, z).across)
   }
@@ -272,9 +277,9 @@ const seat = alongDeck(DECK.to - 0.4)
 const seated = new THREE.Vector3(seat.x, DECK.height + 0.62, seat.z)
 
 export const shots = {
-  // Off the lift, facing south-west: the deck leading out to the view just left of centre, the board close on the right
-  // with the low sun above it.
-  top: shot(OFF, new THREE.Vector3(OFF.x - 42, PLATFORM_HEIGHT - 2, OFF.z + 42)),
+  // Off the lift, facing west-south-west into the low sun: the deck leading out to the view on the left, the board
+  // close by just right of centre, and the patrol hut further right.
+  top: shot(OFF, new THREE.Vector3(OFF.x - 51, PLATFORM_HEIGHT + 1.5, OFF.z + 32)),
   // A couple of steps over to the board, reading it.
   board: shot(
     ground(THREE.MathUtils.lerp(BOARD.x, OFF.x, 0.3), THREE.MathUtils.lerp(BOARD.z, OFF.z, 0.3), 0.85),
