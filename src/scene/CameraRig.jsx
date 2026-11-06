@@ -15,6 +15,7 @@ const sway = new THREE.Vector2()
 const gaze = new THREE.Vector3()
 // Extra head turn from dragging, on top of wherever the shot is aimed.
 const drag = { yaw: 0, pitch: 0 }
+const lens = { fov: shots.top.fov }
 
 // Which way the camera faces to see a point: yaw is left-right, pitch is up-down.
 function headAngles(target, from = pos) {
@@ -118,7 +119,8 @@ export default function CameraRig({ shot, skip, onArrive }) {
       flight.current?.kill()
       const from = pos.clone()
       const fromLook = look.clone()
-      const { camera: to, look: toLook } = shots[shot]
+      const fromFov = lens.fov
+      const { camera: to, look: toLook, fov } = shots[shot]
       const distance = from.distanceTo(to)
       const hop = distance * 0.25 // a big arc for long flights, barely any for a few steps across the platform
       const progress = { t: 0 }
@@ -134,6 +136,7 @@ export default function CameraRig({ shot, skip, onArrive }) {
           pos.lerpVectors(from, to, progress.t)
           pos.y += Math.sin(progress.t * Math.PI) * hop
           look.lerpVectors(fromLook, toLook, progress.t)
+          lens.fov = THREE.MathUtils.lerp(fromFov, fov, progress.t)
         },
       })
     },
@@ -150,6 +153,10 @@ export default function CameraRig({ shot, skip, onArrive }) {
     gaze.set(pos.x + Math.sin(y) * Math.cos(p), pos.y + Math.sin(p), pos.z + Math.cos(y) * Math.cos(p))
     state.camera.position.copy(pos)
     state.camera.lookAt(gaze)
+    if (state.camera.fov !== lens.fov) {
+      state.camera.fov = lens.fov
+      state.camera.updateProjectionMatrix()
+    }
   })
 
   return null

@@ -54,19 +54,28 @@ export const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t)
 }
 
-// Closest distance from (x, z) to a polyline of [x, z] points, ignoring height.
-function distanceToLine(points, x, z) {
-  let best = Infinity
+// The closest spot on a polyline of [x, z] points, ignoring height: how far away it is, how far along the line (0 to 1),
+// and `across`, the same distance but negative on one side of the line.
+function closest(points, x, z) {
+  let distance = Infinity
+  let along = 0
+  let across = 0
   for (let i = 0; i < points.length - 1; i++) {
     const [ax, az] = points[i]
     const [bx, bz] = points[i + 1]
     const dx = bx - ax
     const dz = bz - az
     const t = Math.min(1, Math.max(0, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz)))
-    best = Math.min(best, Math.hypot(x - ax - dx * t, z - az - dz * t))
+    const d = Math.hypot(x - ax - dx * t, z - az - dz * t)
+    if (d < distance) {
+      distance = d
+      along = (i + t) / (points.length - 1)
+      across = dx * (z - az) - dz * (x - ax) < 0 ? -d : d
+    }
   }
-  return best
+  return { distance, along, across }
 }
+const distanceToLine = (points, x, z) => closest(points, x, z).distance
 
 // The top platform, where the lift arrives (with the board and the bench), just under the summit.
 export const TOP = { x: 14, z: -118, radius: 16 }
@@ -79,7 +88,9 @@ const runCurve = new THREE.CatmullRomCurve3(
   ),
 )
 export const RUN_SPOTS = runCurve.getSpacedPoints(70).map((p) => [p.x, p.z])
-export const distanceToRun = (x, z) => (x < -70 || x > 30 ? 100 : distanceToLine(RUN_SPOTS, x, z))
+// Far from the run (well past where it shapes the ground) we skip the search.
+const runAt = (x, z) => (x < -110 || x > 60 ? { distance: 100, along: 0, across: 100 } : closest(RUN_SPOTS, x, z))
+export const distanceToRun = (x, z) => runAt(x, z).distance
 
 // Cliff bands, placed by hand: [from x, from z, to x, to z, drop]. The first crosses right under the lift.
 export const CLIFFS = [
@@ -126,15 +137,26 @@ function cliffs(h, x, z) {
 
 const PLATFORM_HEIGHT = shape(TOP.x, TOP.z, 1)
 
+// The main run has its own profile, top to bottom: steepest just under the platform (~35°), easing off
+// as it goes (~30° in the middle) and running out flat into the village. A slope that eases off like that
+// is also what lets you see the whole thing from the top; one that steepens rolls away out of sight.
+const RUN_TOP = PLATFORM_HEIGHT
+const RUN_BOTTOM = LAKE.level + 7
+const runFloor = (along) => RUN_BOTTOM + (RUN_TOP - RUN_BOTTOM) * (1 - along) ** 1.3
+const RUN_VALLEY = 55 // how far either side the run pulls the ground toward its own line
+
 // Ground height at any world (x, z). The camera, lift, trees and rocks all use this to sit on the slope.
 export function heightAt(x, z) {
-  const run = 1 - smoothstep(RUN_WIDTH * 0.5, RUN_WIDTH * 1.5, distanceToRun(x, z))
+  const { distance, along } = runAt(x, z)
+  const run = 1 - smoothstep(RUN_WIDTH * 0.5, RUN_WIDTH * 1.5, distance)
   let h = cliffs(shape(x, z, 1 - 0.85 * run), x, z)
-  // Flatten the top platform.
-  // A wide apron eases the platform into the slope, so skiing off it isn't a sudden drop.
-  h += (PLATFORM_HEIGHT - h) * smoothstep(TOP.radius + 30, TOP.radius - 4, Math.hypot(x - TOP.x, z - TOP.z))
   // Scoop out the lake and flatten its bed.
   h += (LAKE.level - 2 - h) * smoothstep(LAKE.radius + 80, LAKE.radius - 10, Math.hypot(x - LAKE.x, z - LAKE.z))
+  // Lay the run into the mountain along its profile; the ground either side leans into it like a wide gully.
+  h += (runFloor(along) - h) * smoothstep(RUN_VALLEY, RUN_WIDTH * 0.6, distance)
+  // Flatten the top platform.
+  // A wide apron eases the platform into the slope, so skiing off it isn't a sudden drop.
+  h += (PLATFORM_HEIGHT - h) * smoothstep(TOP.radius + 14, TOP.radius - 4, Math.hypot(x - TOP.x, z - TOP.z))
   // Small lumps the big shapes are too smooth to have (smoothed away on the run).
   return h + (fbm(x * 0.08, z * 0.08) - 0.5) * 1.4 * (1 - run)
 }
@@ -144,8 +166,8 @@ export function slopeAt(x, z) {
   return Math.hypot(heightAt(x + 1, z) - heightAt(x - 1, z), heightAt(x, z + 1) - heightAt(x, z - 1)) / 2
 }
 
-const SNOW = new THREE.Color('#eef1f7') // off-piste
-const GROOMED = new THREE.Color('#fbfcff') // the run, a touch brighter
+const SNOW = new THREE.Color('#e1e7f1') // off-piste, a touch cooler than the bright groomed run
+const DRIFT = new THREE.Color('#d2dae8') // wind-packed patches
 const ROCK = new THREE.Color('#4d5a64') // dark slate, like the rock in Lonely Mountains
 const color = new THREE.Color()
 const normal = new THREE.Vector3()
@@ -160,18 +182,22 @@ export function buildTerrain() {
   geometry.computeVertexNormals()
 
   // Snow sticks to anything gentler than ~45°. Steeper than that is bare rock. Noise wobbles the edge.
+  // The run itself is painted in Mountain's shader, from how far across it each corner is.
   const colors = []
+  const across = []
   for (let i = 0; i < position.count; i++) {
     const x = position.getX(i)
     const z = position.getZ(i)
     normal.fromBufferAttribute(geometry.attributes.normal, i)
     const wobble = (fbm(x * 0.2, z * 0.2) - 0.5) * 0.1
     const rock = smoothstep(0.74 + wobble, 0.62 + wobble, normal.y)
-    const groomed = 1 - smoothstep(RUN_WIDTH * 0.6, RUN_WIDTH, distanceToRun(x, z))
-    color.copy(SNOW).lerp(GROOMED, groomed).lerp(ROCK, rock)
+    const drift = smoothstep(0.5, 0.7, fbm(x * 0.03 + 9, z * 0.03)) * 0.6
+    color.copy(SNOW).lerp(DRIFT, drift).lerp(ROCK, rock)
     colors.push(color.r, color.g, color.b)
+    across.push(runAt(x, z).across)
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
+  geometry.setAttribute('across', new THREE.Float32BufferAttribute(across, 1))
   return geometry
 }
 
@@ -190,10 +216,14 @@ export const ground = (x, z, up = 0) => new THREE.Vector3(x, heightAt(x, z) + up
 // The chairlift: straight up the face, from the village by the lake to the top platform.
 export const LIFT_BOTTOM = ground(LAKE.x + 6, LAKE.z - LAKE.radius - 4)
 export const LIFT_TOP = ground(TOP.x + 6, TOP.z + 8)
+const liftAt = (t) => [THREE.MathUtils.lerp(LIFT_BOTTOM.x, LIFT_TOP.x, t), THREE.MathUtils.lerp(LIFT_BOTTOM.z, LIFT_TOP.z, t)]
 export const liftLine = new THREE.CatmullRomCurve3(
   Array.from({ length: 40 }, (_, i) => {
     const t = i / 39
-    return ground(THREE.MathUtils.lerp(LIFT_BOTTOM.x, LIFT_TOP.x, t), THREE.MathUtils.lerp(LIFT_BOTTOM.z, LIFT_TOP.z, t), 7)
+    const [x, z] = liftAt(t)
+    // 7 units above the highest ground nearby, so the cable sails over the cliff band rather than dipping into it.
+    const nearby = [-1, -0.5, 0, 0.5, 1].map((step) => heightAt(...liftAt(THREE.MathUtils.clamp(t + step / 39, 0, 1))))
+    return new THREE.Vector3(x, Math.max(...nearby) + 7, z)
   }),
 )
 export const distanceToLift = (x, z) =>
@@ -224,22 +254,35 @@ export function treeSpots() {
 }
 
 // Camera spots: where it sits and what it looks at. Eye height is ~0.85 units (1.7 m).
-const shot = (camera, look) => ({ camera, look })
+// fov is how wide the view is, in degrees up and down (the bench gets a wider one, to take it all in).
+const shot = (camera, look, fov = 48) => ({ camera, look, fov })
 const onPlatform = (dx, dz, up) => ground(TOP.x + dx, TOP.z + dz, up)
 
-// Where the board and bench stand on the platform (the scene places them, the camera visits them).
-// Seen from where you get off the lift (looking west), the board is front-right and the bench is front-left.
-export const BOARD = { x: TOP.x - 16, z: TOP.z - 2 }
-export const BENCH = { x: TOP.x - 14, z: TOP.z + 7 }
+// The platform, seen from where you stop after getting off the lift (looking south-west, down the mountain):
+// the trail board close by on the right, and on the left a wooden deck running out over the drop with a bench
+// at its end. From the platform itself the slope rolls away and hides the run; out on the deck you see all of it.
+const OFF = onPlatform(1.4, 3.8, 0.85)
+export const BOARD = { x: TOP.x - 4.2, z: TOP.z + 5.8 }
+// The deck points out along `angle` from the platform's middle, `from` and `to` units out.
+export const DECK = { angle: 2, from: TOP.radius - 2, to: TOP.radius + 11, width: 3.2, height: PLATFORM_HEIGHT + 0.2 }
+export const alongDeck = (r) => ({ x: TOP.x + Math.cos(DECK.angle) * r, z: TOP.z + Math.sin(DECK.angle) * r })
+// Right at the end: any further back and the deck itself would hide the steep slope just below.
+export const BENCH = alongDeck(DECK.to - 0.3)
+const seat = alongDeck(DECK.to - 0.4)
+const seated = new THREE.Vector3(seat.x, DECK.height + 0.62, seat.z)
 
 export const shots = {
-  // Off the lift and a few steps across the platform, facing west: the board on the right,
-  // the edge, the bench and the view (with the low sun) on the left.
-  top: shot(onPlatform(-6, 2, 0.85), new THREE.Vector3(TOP.x - 60, PLATFORM_HEIGHT - 3, TOP.z + 8)),
-  // In front of the board, reading it.
-  board: shot(onPlatform(-13, -0.5, 0.85), ground(BOARD.x, BOARD.z, 0.75)),
-  // Sitting on the bench, looking down the main run to the valley and the lake (drag right for the sun).
-  view: shot(ground(BENCH.x, BENCH.z + 0.1, 0.62), new THREE.Vector3(-25, 95, 110)),
+  // Off the lift, facing south-west: the deck leading out to the view just left of centre, the board close on the right
+  // with the low sun above it.
+  top: shot(OFF, new THREE.Vector3(OFF.x - 42, PLATFORM_HEIGHT - 2, OFF.z + 42)),
+  // A couple of steps over to the board, reading it.
+  board: shot(
+    ground(THREE.MathUtils.lerp(BOARD.x, OFF.x, 0.3), THREE.MathUtils.lerp(BOARD.z, OFF.z, 0.3), 0.85),
+    ground(BOARD.x, BOARD.z, 0.75),
+  ),
+  // Sitting on the bench at the end of the deck, looking out a touch right and tipped down ~21°: the main run, the valley
+  // and the lake, the ranges, and the low sun up in the right corner (drag to look around).
+  view: shot(seated, seated.clone().add(new THREE.Vector3(Math.cos(DECK.angle + 0.1), -0.38, Math.sin(DECK.angle + 0.1)).multiplyScalar(100)), 62),
   about: shot(ground(-80, 150, 12), ground(-30, 110, 6)),
   projects: shot(ground(90, 60, 20), ground(20, 20, 10)),
   experience: shot(ground(-70, -40, 18), ground(-15, -60, 12)),
