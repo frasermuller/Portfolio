@@ -73,8 +73,8 @@ These are all built by the library authors or the community, not Claude defaults
 
 ## Decisions (Nov 5)
 
-- **Mountain:** Silver Star, your home hill. Built from real public elevation data, with the heights exaggerated about 1.7x so it reads as dramatic. The real Okanagan valley cloud inversion becomes the cloud sea, and the real view east is the backdrop.
-- **Look:** soft stylized. Mostly white snow with smooth blue shadows, rock only on cliffs and ridgelines, forest everywhere below the summit with white runs cut through it. Lots of tree variety, plus snow ghosts (fully rime-caked trees) up top.
+- **Mountain:** a new one built from scratch (Silver Star's real data looked like a hill). One continuous climb from a frozen lake and village up to a sharp summit you ride to, with cliff bands, spurs, bowls and faceted rock. Inspired by Grand Mountain Adventure, Lonely Mountains: Snow Riders and Steep, with a Tomb Raider-style summit vista over a sea of distant peaks.
+- **Look:** smooth white snow with real shadows, chunky low-poly rocks pushing through it, scattered snowy trees of several kinds (denser low, sparse up high), golden-hour light.
 - **Chairlift:** bright retro double, with red-orange chairs that pop against the snow.
 - **Camera:** first person on the lift (skis at your feet, look around), third person skiing (follow your little skier down the run).
 - **Ride:** rides on its own (~25s), drag to look around, hold a button or Space to fast-forward, plus Skip.
@@ -102,10 +102,10 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 1. ✅ **First scene.** Canvas, lights, the first mountain.
 2. ✅ **Big mountain, camera on rails.** The whiteout intro ride and preset shots.
 3. ✅ **The world, first pass.** The sunset sky, weather by altitude, a cloud sea, snowy pines.
-4. 🟡 **Lock in the mountain** (first pass done, waiting on your review):
-   - Real Silver Star terrain from elevation data (`scripts/heightmap.mjs`, heights ×2.2), with a Matterhorn-style horn rising from the summit and jagged ranges around the edge.
-   - The soft snow look: smooth shading, rock only on cliffs and high on the horn, snow gullies down its faces.
-   - The cloud inversion at 1250–1450 m. The lift runs from under the clouds to the foot of the horn, and the sun sits behind the lift for alpenglow.
+4. 🟡 **Lock in the mountain** (second pass, waiting on your review):
+   - A new mountain from scratch (`src/scene/terrain.js`): a long climb from the lake to the summit, cliff bands, spurs, side peaks and a ring of ranges.
+   - Faceted rocks on the cliffs (`Rocks.jsx`), real shadows, golden-hour light, a far backdrop of peaks (`Backdrop.jsx`), and five tree types.
+   - The lift runs from the lakeside village (under low cloud) to just under the summit. You turn around at the top to look back down the valley.
 5. **Forests and runs.** Forest everywhere with real variety (spruce, fir, snow ghosts, dead snags, young trees), and runs cut through as white ribbons. A terrain park with jumps and rails.
 6. **Soft clouds.** Replace the chunky puffs with a soft fluffy bank you ride through.
 7. **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view.
@@ -126,5 +126,4 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 
 - **three.js skills** ([CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills), MIT): reference guides for R3F, shaders, geometry, lighting, postprocessing, performance and the asset pipeline, written for our exact versions (three r186+, R3F 9.8, drei 10.7). Plain docs, no scripts.
 - **gltfjsx** (pmndrs, run with `npx` when needed): turns a Blender `.glb` into a React component and compresses it (`npx gltfjsx model.glb --transform`).
-- **Elevation data:** [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen). In Canada they come from NRCan's CDEM under the Open Government Licence – Canada. Needs a credit line on the site.
 - **Blender extensions** we may use: Sapling Tree Gen (parametric trees) and Real Snow (piles snow onto objects). Both are free on extensions.blender.org. We'll try them during the Blender phase.
