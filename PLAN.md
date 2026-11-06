@@ -71,17 +71,28 @@ These are all built by the library authors or the community, not Claude defaults
 - [Codrops](https://tympanus.net/codrops/): those "here's how to make this effect" tutorials with code. The 2023 camera fly-through one is close to what we're building.
 - [Awwwards 3D sites](https://www.awwwards.com/websites/3d/): for taste, not to copy
 
+## Decisions (Nov 5)
+
+- **Mountain:** Silver Star, your home hill. Built from real public elevation data, with the heights exaggerated about 1.7x so it reads as dramatic. The real Okanagan valley cloud inversion becomes the cloud sea, and the real view east is the backdrop.
+- **Look:** soft stylized. Mostly white snow with smooth blue shadows, rock only on cliffs and ridgelines, forest everywhere below the summit with white runs cut through it. Lots of tree variety, plus snow ghosts (fully rime-caked trees) up top.
+- **Chairlift:** bright retro double, with red-orange chairs that pop against the snow.
+- **Camera:** first person on the lift (skis at your feet, look around), third person skiing (follow your little skier down the run).
+- **Ride:** rides on its own (~25s), drag to look around, hold a button or Space to fast-forward, plus Skip.
+- **Clouds:** a soft, semi-see-through fluffy bank. Too dense to see through, so you ride into it and break out on top.
+- **Type:** a routed-wood slab serif for signs and headings, plus a clean text face.
+- **Scale:** it doesn't need to be huge. Unique shots and life matter more.
+
 ## The experience, start to finish
 
-This is how someone moves through the site. It also answers how the chairlift connects to everything else: **you go up on the lift and come down on the runs.**
+You go up on the lift and come down on the runs.
 
-1. **Lift ticket (entry screen).** A ski lift ticket with your name and role on it doubles as the loading screen. Two buttons: *Board with sound* and *Board quietly*. The click also unlocks audio, since browsers block sound until someone clicks.
-2. **The ride up, first person.** You're sitting on a double chair with the safety bar down. Look down and you see your legs and skis dangling. Drag or move the mouse to turn your head (limited range, and it eases back). The chair jolts a little at each tower. You start under the clouds in heavy snow and whiteout, ride up through the cloud layer, and come out above it into a sunset, with a sea of clouds below and the peak glowing pink.
-3. **Unload at the top station.** The bar lifts, the chair tips you off, and the camera glides onto the deck and turns to face…
-4. **The wooden trail signpost.** A 3D post with a sign for each section, and it *is* the menu. Signs wiggle on hover. A small HTML trail-map button stays in the corner for keyboard and screen-reader users, and for anyone who wants to jump straight somewhere.
-5. **Ski down a run.** Clicking a sign skis you down that run in first person, carving turns, to where that section lives: the bunny hill for About, the blue run for Projects, the black diamond for Experience, the lodge for Contact. The content panel springs up there.
-6. **Back up.** "Ride the lift" takes you back up to the signpost on a quick, sped-up ride.
-7. **When nothing's happening,** the camera never sits frozen. It drifts slowly like a film shot, and skiers keep coming down the runs.
+1. **Lift ticket (entry screen).** Your name and role on a ski ticket, doubling as the loading screen. *Board with sound* or *Board quietly*. That click also unlocks audio.
+2. **The ride up, first person.** You sit on the double chair with the bar down and your skis dangling. Drag to look around, hold to fast-forward. The chair jolts at each tower. The lift runs above a run, so you look down and see skiers going under your feet. You pass the terrain park: jumps and rails where little skiers land tricks, or wipe out and ragdoll into the snow. You start under the clouds in heavy snow, ride up through the cloud bank, and come out on top into a sunset over a sea of cloud.
+3. **Top station.** The bar lifts, you ski off, and the camera pulls back to third person. Your skier glides to…
+4. **The wooden trail signpost.** It's snow-capped, and it *is* the menu. Hover makes a sign wiggle. Click and the snow shakes off it, then your skier heads left, right or past it toward that section. A small HTML trail-map button stays in the corner for keyboard and screen-reader users.
+5. **Ski down a run** in third person, with powder spraying behind you, to where each section lives (About, Projects, Experience, Contact at the lodge). The content panel springs up there.
+6. **Back up** on a quick, sped-up lift ride.
+7. **When nothing's happening,** the camera drifts slowly like a film shot. Skiers keep coming down the runs with powder trails, and the park keeps going.
 
 ## Roadmap
 
@@ -89,27 +100,27 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 
 0. ✅ **Fresh start.** Vite 8, the packages, fonts and palette.
 1. ✅ **First scene.** Canvas, lights, the first mountain.
-2. ✅ **Big mountain, camera on rails.** A horned summit, forests, the whiteout intro ride, and preset shots (`src/scene/terrain.js`, `CameraRig.jsx`).
-3. ✅ **The world.** Done in a first pass. Runs and other details come in later phases:
-   - A bit more detail: smaller triangles near the mountain, bigger ones far away.
-   - Weather by altitude: whiteout and heavy snow under the clouds, a clear sunset above.
-   - A sunset sky, a low-poly sea of clouds, and taller distant ranges so it feels like a real place and not a lone mountain.
-   - Tiered snowy pines in a few shapes, in forest patches that climb the mountain.
-4. **The chairlift (Blender)** (next). A retro double chair, either bright chairs that pop against the snow or a rustic old double (your call). Towers, cable, bottom and top stations, plus the skier's legs, boots and skis for the first-person view.
-5. **First-person ride.** Sit in the chair, look around, tower jolts, unloading at the top.
-6. **Signpost and runs.** The 3D wooden signpost menu. Runs groomed through the trees (lighter snow, no trees in the lane). Skiing down a run to each section.
-7. **Life.** Little skiers on the runs, the lift turning, chimney smoke at the lodge, wind-blown snow off the ridges.
-8. **Sound.** Wind, the lift's creak and the clunk at each tower, snow crunch, and quiet music. Sounds come from three.js's built-in audio, positioned in 3D so the tower clunk comes from the tower. Free sources: [freesound.org](https://freesound.org) (filter by CC0) and [Pixabay Music](https://pixabay.com/music/). Better idea: record yourself whistling or humming. That's as personal as it gets.
-9. **Content and words.** The lift ticket, your real projects, experience and about-me text. This replaces "Developer. Pick a run."
-10. **Cinematic polish.** Idle camera drift, a subtle vignette and glow on the sun (postprocessing), loading, the phone layout (the peak's tip currently hides behind the title on tall screens), reduce-motion, and 60fps checks.
-11. **Ship it.** Deploy to Vercel, add a custom domain (optional), post it on LinkedIn.
+2. ✅ **Big mountain, camera on rails.** The whiteout intro ride and preset shots.
+3. ✅ **The world, first pass.** The sunset sky, weather by altitude, a cloud sea, snowy pines.
+4. **Lock in the mountain** (now):
+   - Real Silver Star terrain from elevation data.
+   - The soft stylized snow look.
+   - New camera spots on the real summit and lift line.
+5. **Forests and runs.** Forest everywhere with real variety (spruce, fir, snow ghosts, dead snags, young trees), and runs cut through as white ribbons. A terrain park with jumps and rails.
+6. **Soft clouds.** Replace the chunky puffs with a soft fluffy bank you ride through.
+7. **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view.
+8. **First-person ride.** Look around, fast-forward, tower jolts, unloading at the top.
+9. **Skiers.** One cute low-poly skier with swappable jacket and pants colours. Skiers carve down runs with powder trails, hit the park, land tricks or ragdoll wipeouts.
+10. **Signpost and skiing.** The snow-capped wooden signpost menu, snow shaking off on click, your third-person skier skiing to each section.
+11. **Sound.** Wind, lift creaks and tower clunks, snow crunch, soft music (or your own whistling). Uses three.js positional audio. Free sources: [freesound.org](https://freesound.org) (CC0) and [Pixabay Music](https://pixabay.com/music/).
+12. **Content and words.** The lift ticket, your real projects, experience and about-me text. This replaces "Developer. Pick a run."
+13. **Cinematic polish.** Idle drift, a subtle vignette and sun glow, loading, the phone layout, reduce-motion, 60fps checks.
+14. **Ship it.** Vercel, an optional custom domain, the LinkedIn post.
 
-## Questions for you (whenever)
+## Still need from you (whenever)
 
-- **Which mountain do you actually ski?** We can shape the peak after your home hill. That's much more personal than a generic Matterhorn.
-- **Chairlift style:** bright and poppy, or rustic old double?
-- **Your one-liner:** your role, where you're based or studying, and what you're into. This goes on the lift ticket.
-- **Music:** any vibe or tracks you like? Or record that whistle.
+- **Your one-liner** for the lift ticket: your role, where you're studying or working, and what you're into.
+- **Music vibe,** or record a whistle.
 
 ## Tools added
 
