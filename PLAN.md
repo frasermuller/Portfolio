@@ -101,6 +101,19 @@ You go up on the lift and come down on the runs. Everything on the mountain is p
 
 **UI (redo later):** the current pink-and-navy button stack and fonts are placeholder. They'll be replaced with in-world signage (the board) and a few small, distinctive controls instead of a big overlay.
 
+## Your feedback (Nov 6) and what we're doing about it
+
+- **View from the top:** keep the run going down (you liked it), but fade the landscape in more layers, with real visible sky instead of fog and cloud. → Layered ranges, each one hazier, and a clear golden-hour sky up top.
+- **The mountain:** real peaks, cliffs and cliff sides with textured rock walls, not one soft blob. Medium poly is fine, enough detail that it doesn't look cheap. → Faceted rock shading with strata on steep ground, chunky rock walls on the cliff bands, a proper rocky summit.
+- **The top area:** more than flat white snow. Things up there that make it feel like a real summit. → Lift top station, summit crag, rocks, drifts, props.
+- **The arrival view:** see the board, the bench and the landscape (ranges and sky) together.
+- **The trail board:** full redo. Way more detail, real content on it, and no tilting the whole board on hover. → A routed-wood sign with a roof, carved rows for each section, snow on each row that you knock off.
+- **The ride:** feels choppy and too quick, and the hop off at the top isn't great. → A smooth cable line, a slower ride (hold to speed up), and a proper unload: slow into the station, stand up, glide off and turn to face the view.
+- **Still missing:** the chairlift itself and your character (legs, skis). That's the Blender phase, next.
+- **Later:** redo the buttons and type so they look like part of the world, not an overlay.
+
+**From the Blender + Claude guide** ([vagon.io](https://vagon.io/blog/how-to-use-blender-with-claude)): build models with Python scripts, not by hand (no sculpting or vertex pushing). Ask for a plan first, use named collections, check the viewport after every step, work in a test file, and keep Poly Haven (CC0 textures and HDRIs) switched off unless we need it. We already have the official Blender MCP connected, so the chairlift gets built that way.
+
 ## Roadmap
 
 Each phase is a few small commits. Claude builds, explains how it works, and the code is commented so you can read along. You review each step and we iterate.
