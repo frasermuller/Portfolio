@@ -45,7 +45,7 @@ function rockSpots() {
   // Along each cliff band, just below the edge, in a slightly ragged double row.
   CLIFFS.forEach(([ax, az, bx, bz], c) => {
     const length = Math.hypot(bx - ax, bz - az)
-    const across = [(bz - az) / length, -(bx - ax) / length] // points downhill
+    const across = [-(bz - az) / length, (bx - ax) / length] // points downhill
     for (let along = 0.06; along < 0.94; along += 2.4 / length) {
       const seed = c * 1000 + Math.round(along * 1000)
       const offset = 1 + hash(seed, 1) * 2.5

@@ -117,7 +117,7 @@ function cliffs(h, x, z) {
     const length = Math.hypot(dx, dz)
     const along = ((x - ax) * dx + (z - az) * dz) / (length * length)
     if (along < -0.3 || along > 1.3) continue
-    const across = ((x - ax) * dz - (z - az) * dx) / length // positive on the downhill (south) side
+    const across = ((z - az) * dx - (x - ax) * dz) / length // positive on the downhill (south) side
     const ends = smoothstep(-0.25, 0.1, along) * smoothstep(1.25, 0.9, along)
     h -= drop * (smoothstep(-1.2, 1.2, across) - smoothstep(4, 45, across)) * ends
   }
