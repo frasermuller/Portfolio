@@ -11,6 +11,7 @@ import Clouds from './scene/Clouds.jsx'
 import Rocks from './scene/Rocks.jsx'
 import Markers from './scene/Markers.jsx'
 import Chairlift from './scene/Chairlift.jsx'
+import Skiers from './scene/Skiers.jsx'
 import Backdrop from './scene/Backdrop.jsx'
 import TopStation from './scene/TopStation.jsx'
 import TrailBoard from './scene/TrailBoard.jsx'
@@ -43,9 +44,11 @@ function App() {
         <Mountain />
         <Rocks />
         <Markers />
-        {/* The lift model loads from a file; the rest of the scene doesn't wait for it. */}
+        {/* The lift and skier models load from files; the rest of the scene doesn't wait for them. */}
         <Suspense fallback={null}>
           <Chairlift />
+          {/* Click a skier to make them wipe out (once you're off the lift). */}
+          <Skiers clickable={arrived} />
         </Suspense>
         <Trees />
         <Clouds />
