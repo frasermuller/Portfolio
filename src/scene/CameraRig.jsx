@@ -37,23 +37,30 @@ export default function CameraRig({ shot, skip, onArrive }) {
   const current = useRef('top') // where the camera is now (the intro already ends at the top)
   const canvas = useThree((state) => state.gl.domElement)
 
+  const unturn = useRef() // the tween that eases the head back to straight ahead after a move
+
   // Drag anywhere to look around (like turning your head), within limits.
   useEffect(() => {
-    let last = null
-    const down = (e) => (last = { x: e.clientX, y: e.clientY })
-    const up = () => (last = null)
+    const pointer = { last: null } // where the drag was last frame, or null when not dragging
+    const down = (e) => {
+      unturn.current?.kill() // grabbing the view takes over from any automatic head turn
+      pointer.last = { x: e.clientX, y: e.clientY }
+    }
+    const up = () => (pointer.last = null)
     const move = (e) => {
-      if (!last) return
-      drag.yaw = THREE.MathUtils.clamp(drag.yaw + (e.clientX - last.x) * 0.004, -1.7, 1.7)
-      drag.pitch = THREE.MathUtils.clamp(drag.pitch + (e.clientY - last.y) * 0.004, -0.7, 0.6)
-      last = { x: e.clientX, y: e.clientY }
+      if (!pointer.last) return
+      drag.yaw = THREE.MathUtils.clamp(drag.yaw + (e.clientX - pointer.last.x) * 0.004, -1.7, 1.7)
+      drag.pitch = THREE.MathUtils.clamp(drag.pitch + (e.clientY - pointer.last.y) * 0.004, -0.7, 0.6)
+      pointer.last = { x: e.clientX, y: e.clientY }
     }
     canvas.addEventListener('pointerdown', down)
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
     window.addEventListener('pointermove', move)
     return () => {
       canvas.removeEventListener('pointerdown', down)
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
       window.removeEventListener('pointermove', move)
     }
   }, [canvas])
@@ -115,7 +122,9 @@ export default function CameraRig({ shot, skip, onArrive }) {
       const distance = from.distanceTo(to)
       const hop = distance * 0.25 // a big arc for long flights, barely any for a few steps across the platform
       const progress = { t: 0 }
-      gsap.to(drag, { yaw: 0, pitch: 0, duration: 1.2, ease: 'power2.out' }) // face where the new shot points
+      // Face where the new shot points.
+      unturn.current?.kill()
+      unturn.current = gsap.to(drag, { yaw: 0, pitch: 0, duration: reducedMotion ? 0 : 1.2, ease: 'power2.out' })
 
       flight.current = gsap.to(progress, {
         t: 1,
