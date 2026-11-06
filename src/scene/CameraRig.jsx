@@ -185,8 +185,11 @@ export default function CameraRig({ shot, skip, speed, onArrive }) {
     gaze.set(pos.x + Math.sin(y) * Math.cos(p), pos.y + Math.sin(p), pos.z + Math.cos(y) * Math.cos(p))
     state.camera.position.copy(pos)
     state.camera.lookAt(gaze)
-    if (state.camera.fov !== lens.fov) {
-      state.camera.fov = lens.fov
+    // On a tall phone screen, widen the view so things off to the sides (the deck, the board) stay in frame:
+    // never narrower than ~52° side to side.
+    const fov = Math.max(lens.fov, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(26)) / state.camera.aspect)))
+    if (state.camera.fov !== fov) {
+      state.camera.fov = fov
       state.camera.updateProjectionMatrix()
     }
   })
