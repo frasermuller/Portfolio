@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import * as THREE from 'three'
@@ -15,12 +15,11 @@ const ahead = new THREE.Vector3()
 const sway = new THREE.Vector2()
 
 export default function CameraRig({ shot, skip, onArrive }) {
-  const scene = useThree((state) => state.scene)
   const ride = useRef()
   const flight = useRef()
-  const firstShot = useRef(true)
+  const current = useRef('top') // where the camera is now (the intro already ends at the top)
 
-  // The intro: ride the chairlift up out of the whiteout.
+  // The intro: ride the chairlift up out of the whiteout. (The fog thins by itself as you climb, see Atmosphere.)
   useGSAP(() => {
     const progress = { t: 0 }
     const place = () => {
@@ -34,8 +33,6 @@ export default function CameraRig({ shot, skip, onArrive }) {
     ride.current = gsap
       .timeline({ onComplete: onArrive })
       .to(progress, { t: 1, duration: RIDE_SECONDS, ease: 'sine.inOut', onUpdate: place })
-      // Thick fog at the bottom that thins out as you climb: the summit is the reveal.
-      .fromTo(scene.fog, { density: 0.03 }, { density: 0.0035, duration: RIDE_SECONDS, ease: 'power2.in' }, 0)
 
     if (reducedMotion) ride.current.progress(1)
   }, [])
@@ -47,10 +44,9 @@ export default function CameraRig({ shot, skip, onArrive }) {
   // Flying between places: a straight line could cut through the mountain, so it arcs up and over.
   useGSAP(
     () => {
-      if (firstShot.current) {
-        firstShot.current = false
-        return
-      }
+      // Already there? Do nothing. (Also stops React's double-run in dev from launching a stray flight.)
+      if (shot === current.current) return
+      current.current = shot
       flight.current?.kill()
       const from = pos.clone()
       const fromLook = look.clone()

@@ -5,9 +5,10 @@ import Mountain from './scene/Mountain.jsx'
 import Trees from './scene/Trees.jsx'
 import Snow from './scene/Snow.jsx'
 import CameraRig from './scene/CameraRig.jsx'
+import Atmosphere from './scene/Atmosphere.jsx'
+import Sky from './scene/Sky.jsx'
+import Clouds from './scene/Clouds.jsx'
 import './App.css'
-
-const FOG = '#d9d3e4'
 
 // The signpost. Each sign is a place on the mountain, marked the way real trail signs are.
 const SIGNS = [
@@ -29,16 +30,11 @@ function App() {
   return (
     <main className="app">
       <Canvas className="scene" camera={{ fov: 38, near: 0.5, far: 1500 }} dpr={[1, 2]}>
-        {/* Sky and fog are the same colour, so the world dissolves into white instead of ending. */}
-        <color attach="background" args={[FOG]} />
-        <fogExp2 attach="fog" args={[FOG, 0.03]} />
-
-        <hemisphereLight args={['#e4e0ff', '#5a6290', 1.1]} />
-        {/* The low sun, warm and pink, makes the alpenglow on one side of every ridge. */}
-        <directionalLight position={[-120, 60, 80]} intensity={2.4} color="#ffc6d6" />
-
+        <Atmosphere />
+        <Sky />
         <Mountain />
         <Trees />
+        <Clouds />
         <Snow />
         <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
