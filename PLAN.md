@@ -84,15 +84,22 @@ These are all built by the library authors or the community, not Claude defaults
 
 ## The experience, start to finish
 
-You go up on the lift and come down on the runs.
+You go up on the lift and come down on the runs. Everything on the mountain is placed on purpose (runs, cliffs, rock bands, forest edges), not scattered at random.
 
 1. **Lift ticket (entry screen).** Your name and role on a ski ticket, doubling as the loading screen. *Board with sound* or *Board quietly*. That click also unlocks audio.
-2. **The ride up, first person.** You sit on the double chair with the bar down and your skis dangling. Drag to look around, hold to fast-forward. The chair jolts at each tower. The lift runs above a run, so you look down and see skiers going under your feet. You pass the terrain park: jumps and rails where little skiers land tricks, or wipe out and ragdoll into the snow. You start under the clouds in heavy snow, ride up through the cloud bank, and come out on top into a sunset over a sea of cloud.
-3. **Top station.** The bar lifts, you ski off, and the camera pulls back to third person. Your skier glides to…
-4. **The wooden trail signpost.** It's snow-capped, and it *is* the menu. Hover makes a sign wiggle. Click and the snow shakes off it, then your skier heads left, right or past it toward that section. A small HTML trail-map button stays in the corner for keyboard and screen-reader users.
-5. **Ski down a run** in third person, with powder spraying behind you, to where each section lives (About, Projects, Experience, Contact at the lodge). The content panel springs up there.
-6. **Back up** on a quick, sped-up lift ride.
-7. **When nothing's happening,** the camera drifts slowly like a film shot. Skiers keep coming down the runs with powder trails, and the park keeps going.
+2. **The ride up, first person.** The ride is smooth and high, climbing through the low cloud. Look around, look down at your skis, hold to fast-forward. Below you, a run goes down under the lift, and the action is scripted like a short film:
+   - A skier hits the cliff band under the lift and sends it off the drop (a trick, a clean landing).
+   - A couple of other skiers carve down. One of them wipes out and ragdolls.
+3. **The top station.** You get off facing out across the summit platform:
+   - **On the right, the wooden board** (snow-capped trail sign). Click it and you move in close and it becomes the menu. Clicking a section knocks the snow off and sends your skier toward it.
+   - **On the left, the view.** "Enjoy the view" walks you to a bench at the edge. You sit and look around: the main run dropping away below with skiers on it, the valley and lake, ranges fading into the distance, and the low sun coming through. Click a skier to make them wipe out.
+4. **Ski down a run** in third person, with powder spraying behind you, to where each section lives. The content panel springs up there.
+5. **Back up** on a quick, sped-up lift ride.
+6. **When nothing's happening,** the camera drifts slowly like a film shot and the skiers keep coming.
+
+**Look of the world:** steep enough to feel like a real mountain, gentle enough to obviously ski. Detail fades gradually into the distance: crisp foreground, softer mid-range peaks, hazy far ranges.
+
+**UI (redo later):** the current pink-and-navy button stack and fonts are placeholder. They'll be replaced with in-world signage (the board) and a few small, distinctive controls instead of a big overlay.
 
 ## Roadmap
 
@@ -110,10 +117,10 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 6. **Soft clouds.** Replace the chunky puffs with a soft fluffy bank you ride through.
 7. **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view.
 8. **First-person ride.** Look around, fast-forward, tower jolts, unloading at the top.
-9. **Skiers.** One cute low-poly skier with swappable jacket and pants colours. Skiers carve down runs with powder trails, hit the park, land tricks or ragdoll wipeouts.
-10. **Signpost and skiing.** The snow-capped wooden signpost menu, snow shaking off on click, your third-person skier skiing to each section.
+9. **Skiers.** One cute low-poly skier with swappable jacket and pants colours. Scripted moments: the cliff jump under the lift, carving with powder trails, park tricks, ragdoll wipeouts, and click-to-wipe-out from the bench.
+10. **Top station.** The board menu (right) and the bench view (left), snow shaking off the board, your third-person skier skiing to each section.
 11. **Sound.** Wind, lift creaks and tower clunks, snow crunch, soft music (or your own whistling). Uses three.js positional audio. Free sources: [freesound.org](https://freesound.org) (CC0) and [Pixabay Music](https://pixabay.com/music/).
-12. **Content and words.** The lift ticket, your real projects, experience and about-me text. This replaces "Developer. Pick a run."
+12. **Content, words and UI.** The lift ticket, your real projects, experience and about-me text. New type and controls to replace the placeholder overlay.
 13. **Cinematic polish.** Idle drift, a subtle vignette and sun glow, loading, the phone layout, reduce-motion, 60fps checks.
 14. **Ship it.** Vercel, an optional custom domain, the LinkedIn post.
 
