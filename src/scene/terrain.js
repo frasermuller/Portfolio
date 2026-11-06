@@ -268,6 +268,7 @@ const onPlatform = (dx, dz, up) => ground(TOP.x + dx, TOP.z + dz, up)
 // at its end. From the platform itself the slope rolls away and hides the run; out on the deck you see all of it.
 const OFF = onPlatform(1.4, 3.8, 0.85)
 export const BOARD = { x: TOP.x - 4.2, z: TOP.z + 5.8 }
+const toOff = new THREE.Vector2(OFF.x - BOARD.x, OFF.z - BOARD.z).normalize()
 // The deck points out along `angle` from the platform's middle, `from` and `to` units out.
 export const DECK = { angle: 2, from: TOP.radius - 2, to: TOP.radius + 11, width: 3.2, height: PLATFORM_HEIGHT + 0.2 }
 export const alongDeck = (r) => ({ x: TOP.x + Math.cos(DECK.angle) * r, z: TOP.z + Math.sin(DECK.angle) * r })
@@ -280,11 +281,8 @@ export const shots = {
   // Off the lift, facing west-south-west into the low sun: the deck leading out to the view on the left, the board
   // close by just right of centre, and the patrol hut further right.
   top: shot(OFF, new THREE.Vector3(OFF.x - 51, PLATFORM_HEIGHT + 1.5, OFF.z + 32)),
-  // A couple of steps over to the board, reading it.
-  board: shot(
-    ground(THREE.MathUtils.lerp(BOARD.x, OFF.x, 0.3), THREE.MathUtils.lerp(BOARD.z, OFF.z, 0.3), 0.85),
-    ground(BOARD.x, BOARD.z, 0.75),
-  ),
+  // A couple of steps over to the board, square on and close enough to read it.
+  board: shot(ground(BOARD.x + toOff.x * 1.6, BOARD.z + toOff.y * 1.6, 0.92), ground(BOARD.x, BOARD.z, 0.92)),
   // Sitting on the bench at the end of the deck, looking out a touch right and tipped down ~15°: the main run, the valley
   // and the lake, the ranges, and the low sun up in the right corner (drag to look around).
   view: shot(seated, seated.clone().add(new THREE.Vector3(Math.cos(DECK.angle + 0.1), -0.27, Math.sin(DECK.angle + 0.1)).multiplyScalar(100)), 66),

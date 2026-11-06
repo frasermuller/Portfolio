@@ -12,6 +12,7 @@ import Rocks from './scene/Rocks.jsx'
 import Markers from './scene/Markers.jsx'
 import Backdrop from './scene/Backdrop.jsx'
 import TopStation from './scene/TopStation.jsx'
+import TrailBoard from './scene/TrailBoard.jsx'
 import SummitProps from './scene/SummitProps.jsx'
 import './App.css'
 
@@ -45,7 +46,8 @@ function App() {
         <Snow />
         {/* The board and bench only respond once you're off the lift, so a click can't fight the intro. */}
         <SummitProps />
-        <TopStation onBoard={() => arrived && setShot('board')} onBench={() => arrived && setShot('view')} />
+        <TopStation onBench={() => arrived && setShot('view')} />
+        <TrailBoard active={shot === 'board'} onOpen={() => arrived && setShot('board')} onPick={setShot} />
         <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
 
