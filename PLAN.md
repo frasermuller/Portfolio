@@ -102,10 +102,10 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 1. ✅ **First scene.** Canvas, lights, the first mountain.
 2. ✅ **Big mountain, camera on rails.** The whiteout intro ride and preset shots.
 3. ✅ **The world, first pass.** The sunset sky, weather by altitude, a cloud sea, snowy pines.
-4. **Lock in the mountain** (now):
-   - Real Silver Star terrain from elevation data.
-   - The soft stylized snow look.
-   - New camera spots on the real summit and lift line.
+4. 🟡 **Lock in the mountain** (first pass done, waiting on your review):
+   - Real Silver Star terrain from elevation data (`scripts/heightmap.mjs`, heights ×2.2), with a Matterhorn-style horn rising from the summit and jagged ranges around the edge.
+   - The soft snow look: smooth shading, rock only on cliffs and high on the horn, snow gullies down its faces.
+   - The cloud inversion at 1250–1450 m. The lift runs from under the clouds to the foot of the horn, and the sun sits behind the lift for alpenglow.
 5. **Forests and runs.** Forest everywhere with real variety (spruce, fir, snow ghosts, dead snags, young trees), and runs cut through as white ribbons. A terrain park with jumps and rails.
 6. **Soft clouds.** Replace the chunky puffs with a soft fluffy bank you ride through.
 7. **The chairlift (Blender).** A bright retro double with towers, cable and stations, plus your legs, boots and skis for the first-person view.
@@ -126,4 +126,5 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 
 - **three.js skills** ([CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills), MIT): reference guides for R3F, shaders, geometry, lighting, postprocessing, performance and the asset pipeline, written for our exact versions (three r186+, R3F 9.8, drei 10.7). Plain docs, no scripts.
 - **gltfjsx** (pmndrs, run with `npx` when needed): turns a Blender `.glb` into a React component and compresses it (`npx gltfjsx model.glb --transform`).
+- **Elevation data:** [AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/) (Mapzen). In Canada they come from NRCan's CDEM under the Open Government Licence – Canada. Needs a credit line on the site.
 - **Blender extensions** we may use: Sapling Tree Gen (parametric trees) and Real Snow (piles snow onto objects). Both are free on extensions.blender.org. We'll try them during the Blender phase.
