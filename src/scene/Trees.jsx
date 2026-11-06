@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { treeSpots } from './terrain.js'
 
-const NEEDLES = new THREE.Color('#2f5a4e')
+const NEEDLES = new THREE.Color('#3f6e5e')
 const SNOW = new THREE.Color('#f3f0fa')
 const TRUNK = new THREE.Color('#5a4036')
 
@@ -44,7 +44,9 @@ function Forest({ geometry, spots }) {
 
   useLayoutEffect(() => {
     const dummy = new THREE.Object3D()
+    const tint = new THREE.Color()
     spots.forEach((spot, i) => {
+      ref.current.setColorAt(i, tint.setScalar(spot.tint))
       dummy.position.set(spot.x, spot.y - 0.4, spot.z)
       dummy.scale.setScalar(spot.scale)
       dummy.rotation.y = spot.x // any number works, it just stops every tree facing the same way
@@ -52,6 +54,7 @@ function Forest({ geometry, spots }) {
       ref.current.setMatrixAt(i, dummy.matrix)
     })
     ref.current.instanceMatrix.needsUpdate = true
+    ref.current.instanceColor.needsUpdate = true
   }, [spots])
 
   // One draw call per kind: an instanced mesh stamps the same tree out hundreds of times.
