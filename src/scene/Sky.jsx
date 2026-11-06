@@ -56,7 +56,7 @@ export default function Sky() {
   return (
     // Drawn first and never in front of anything, so it's always the backdrop.
     <mesh ref={ref} material={material} renderOrder={-1} frustumCulled={false}>
-      <sphereGeometry args={[1000, 32, 16]} />
+      <sphereGeometry args={[2200, 32, 16]} />
     </mesh>
   )
 }

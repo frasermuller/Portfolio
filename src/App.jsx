@@ -8,6 +8,8 @@ import CameraRig from './scene/CameraRig.jsx'
 import Atmosphere from './scene/Atmosphere.jsx'
 import Sky from './scene/Sky.jsx'
 import Clouds from './scene/Clouds.jsx'
+import Rocks from './scene/Rocks.jsx'
+import Backdrop from './scene/Backdrop.jsx'
 import './App.css'
 
 // The signpost. Each sign is a place on the mountain, marked the way real trail signs are.
@@ -29,10 +31,12 @@ function App() {
 
   return (
     <main className="app">
-      <Canvas className="scene" camera={{ fov: 38, near: 0.5, far: 1500 }} dpr={[1, 2]}>
+      <Canvas className="scene" camera={{ fov: 38, near: 0.5, far: 2600 }} dpr={[1, 2]} shadows>
         <Atmosphere />
         <Sky />
+        <Backdrop />
         <Mountain />
+        <Rocks />
         <Trees />
         <Clouds />
         <Snow />

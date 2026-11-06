@@ -6,7 +6,7 @@ export default function Mountain() {
 
   return (
     // Smooth shading (no flatShading) for the soft, snowy look.
-    <mesh geometry={geometry}>
+    <mesh geometry={geometry} castShadow receiveShadow>
       <meshStandardMaterial vertexColors roughness={1} />
     </mesh>
   )
