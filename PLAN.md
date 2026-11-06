@@ -71,19 +71,48 @@ These are all built by the library authors or the community, not Claude defaults
 - [Codrops](https://tympanus.net/codrops/): those "here's how to make this effect" tutorials with code. The 2023 camera fly-through one is close to what we're building.
 - [Awwwards 3D sites](https://www.awwwards.com/websites/3d/): for taste, not to copy
 
-## Milestones
+## The experience, start to finish
 
-Each milestone is a few small commits. Claude builds it and explains how it works. The code is commented so you can read along, and you tweak the numbers to make it yours.
+This is how someone moves through the site. It also answers how the chairlift connects to everything else: **you go up on the lift and come down on the runs.**
+
+1. **Lift ticket (entry screen).** A ski lift ticket with your name and role on it doubles as the loading screen. Two buttons: *Board with sound* and *Board quietly*. The click also unlocks audio, since browsers block sound until someone clicks.
+2. **The ride up, first person.** You're sitting on a double chair with the safety bar down. Look down and you see your legs and skis dangling. Drag or move the mouse to turn your head (limited range, and it eases back). The chair jolts a little at each tower. You start under the clouds in heavy snow and whiteout, ride up through the cloud layer, and come out above it into a sunset, with a sea of clouds below and the peak glowing pink.
+3. **Unload at the top station.** The bar lifts, the chair tips you off, and the camera glides onto the deck and turns to face…
+4. **The wooden trail signpost.** A 3D post with a sign for each section, and it *is* the menu. Signs wiggle on hover. A small HTML trail-map button stays in the corner for keyboard and screen-reader users, and for anyone who wants to jump straight somewhere.
+5. **Ski down a run.** Clicking a sign skis you down that run in first person, carving turns, to where that section lives: the bunny hill for About, the blue run for Projects, the black diamond for Experience, the lodge for Contact. The content panel springs up there.
+6. **Back up.** "Ride the lift" takes you back up to the signpost on a quick, sped-up ride.
+7. **When nothing's happening,** the camera never sits frozen. It drifts slowly like a film shot, and skiers keep coming down the runs.
+
+## Roadmap
+
+Each phase is a few small commits. Claude builds, explains how it works, and the code is commented so you can read along. You review each step and we iterate.
 
 0. ✅ **Fresh start.** Vite 8, the packages, fonts and palette.
-1. ✅ **First canvas.** `<Canvas>`, lights, fog, and orbiting with `<CameraControls>`.
-2. ✅ **The mountain.** A 1000-unit world with a horned summit, ridged noise, distant ranges and pine forests, all dissolving into a dusk whiteout. Snow sticks to the flatter faces and cliffs stay rock (`src/scene/terrain.js`).
-   - Camera on rails, no free orbiting. The intro rides the chairlift up out of thick fog, and the fog thins as you climb. Each sign then flies the camera to a preset shot, arcing up so it never cuts through the mountain (`src/scene/CameraRig.jsx`).
-   - To move a shot, change its `around(angle, distance, height)` numbers in `terrain.js`.
-3. **The look.** Toon lighting, fog, sky gradient, outlines, falling snow. Learn: materials, lights, postprocessing, particles.
-4. **Blender pass.** Model the lodge, lift, trees and signs, export `.glb`, and turn them into components with `gltfjsx`. Learn: the 3D asset pipeline.
-5. **Interaction.** Hover and click run signs, the camera flies down the run (GSAP), and a panel springs in (Motion). Learn: raycasting, timelines, springs.
-6. **Life.** Skiers on curved paths, the turning chairlift, chimney smoke. Learn: curves, `useFrame`, instancing.
-7. **Content.** Your real projects, experience and about-me text.
-8. **Polish.** Loading screen, a lighter version for phones, respecting "reduce motion", a plain-text nav for screen readers, and 60fps checks.
-9. **Ship it.** Deploy, custom domain (optional), post it on LinkedIn.
+1. ✅ **First scene.** Canvas, lights, the first mountain.
+2. ✅ **Big mountain, camera on rails.** A horned summit, forests, the whiteout intro ride, and preset shots (`src/scene/terrain.js`, `CameraRig.jsx`).
+3. **The world** (next):
+   - A bit more detail: smaller triangles near the mountain, bigger ones far away.
+   - Weather by altitude: whiteout and heavy snow under the clouds, a clear sunset above.
+   - A sunset sky, a low-poly sea of clouds, and taller distant ranges so it feels like a real place and not a lone mountain.
+   - Tiered snowy pines in a few shapes, in forest patches that climb the mountain.
+4. **The chairlift (Blender).** A retro double chair, either bright chairs that pop against the snow or a rustic old double (your call). Towers, cable, bottom and top stations, plus the skier's legs, boots and skis for the first-person view.
+5. **First-person ride.** Sit in the chair, look around, tower jolts, unloading at the top.
+6. **Signpost and runs.** The 3D wooden signpost menu. Runs groomed through the trees (lighter snow, no trees in the lane). Skiing down a run to each section.
+7. **Life.** Little skiers on the runs, the lift turning, chimney smoke at the lodge, wind-blown snow off the ridges.
+8. **Sound.** Wind, the lift's creak and the clunk at each tower, snow crunch, and quiet music. Sounds come from three.js's built-in audio, positioned in 3D so the tower clunk comes from the tower. Free sources: [freesound.org](https://freesound.org) (filter by CC0) and [Pixabay Music](https://pixabay.com/music/). Better idea: record yourself whistling or humming. That's as personal as it gets.
+9. **Content and words.** The lift ticket, your real projects, experience and about-me text. This replaces "Developer. Pick a run."
+10. **Cinematic polish.** Idle camera drift, a subtle vignette and glow on the sun (postprocessing), loading, the phone layout (the peak's tip currently hides behind the title on tall screens), reduce-motion, and 60fps checks.
+11. **Ship it.** Deploy to Vercel, add a custom domain (optional), post it on LinkedIn.
+
+## Questions for you (whenever)
+
+- **Which mountain do you actually ski?** We can shape the peak after your home hill. That's much more personal than a generic Matterhorn.
+- **Chairlift style:** bright and poppy, or rustic old double?
+- **Your one-liner:** your role, where you're based or studying, and what you're into. This goes on the lift ticket.
+- **Music:** any vibe or tracks you like? Or record that whistle.
+
+## Tools added
+
+- **three.js skills** ([CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills), MIT): reference guides for R3F, shaders, geometry, lighting, postprocessing, performance and the asset pipeline, written for our exact versions (three r186+, R3F 9.8, drei 10.7). Plain docs, no scripts.
+- **gltfjsx** (pmndrs, run with `npx` when needed): turns a Blender `.glb` into a React component and compresses it (`npx gltfjsx model.glb --transform`).
+- **Blender extensions** we may use: Sapling Tree Gen (parametric trees) and Real Snow (piles snow onto objects). Both are free on extensions.blender.org. We'll try them during the Blender phase.
