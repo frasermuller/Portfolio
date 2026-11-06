@@ -9,6 +9,7 @@ import Atmosphere from './scene/Atmosphere.jsx'
 import Sky from './scene/Sky.jsx'
 import Clouds from './scene/Clouds.jsx'
 import Rocks from './scene/Rocks.jsx'
+import Markers from './scene/Markers.jsx'
 import Backdrop from './scene/Backdrop.jsx'
 import TopStation from './scene/TopStation.jsx'
 import './App.css'
@@ -37,6 +38,7 @@ function App() {
         <Backdrop />
         <Mountain />
         <Rocks />
+        <Markers />
         <Trees />
         <Clouds />
         <Snow />
