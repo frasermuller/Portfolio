@@ -124,6 +124,14 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 13. **Cinematic polish.** Idle drift, a subtle vignette and sun glow, loading, the phone layout, reduce-motion, 60fps checks.
 14. **Ship it.** Vercel, an optional custom domain, the LinkedIn post.
 
+## Research notes (Nov 5)
+
+- **Skiers:** animate in code, not physics. Each skier is a few rigid body parts, drawn as one instanced mesh per part with per-skier jacket and pants colours. Lean comes from the run's curvature, jumps are a parabola plus a spin, and wipeouts are a scripted tumble. Physics (Rapier, 15 MB) only if the click-to-wipe-out needs it, loaded just for that skier.
+- **Chairlift:** model one tower, one chair and the stations in Blender via `bpy` (bevel modifier, flat shading, named materials for recolourable parts). Export with `export_apply=True`, then run gltfjsx with `--keepmeshes --keepnames` so parts stay separate. Towers and the sagging cable get laid out in code along the lift line.
+- **First-person seat:** cable pivot, then a swinging hanger, the seat (skis attached), the head, the camera. Drag sets head yaw and pitch (clamped) and eases back. Each tower gives a little bump.
+- **Powder and spindrift:** one shared pool of camera-facing particles, moved in the shader.
+- **Blender skills to consider:** [EL4CTEO/blender-skills](https://github.com/EL4CTEO/blender-skills) (MIT, includes a web GLB export preset). It has executable scripts, so read them before using.
+
 ## Still need from you (whenever)
 
 - **Your one-liner** for the lift ticket: your role, where you're studying or working, and what you're into.
