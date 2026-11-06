@@ -90,12 +90,12 @@ Each phase is a few small commits. Claude builds, explains how it works, and the
 0. ✅ **Fresh start.** Vite 8, the packages, fonts and palette.
 1. ✅ **First scene.** Canvas, lights, the first mountain.
 2. ✅ **Big mountain, camera on rails.** A horned summit, forests, the whiteout intro ride, and preset shots (`src/scene/terrain.js`, `CameraRig.jsx`).
-3. **The world** (next):
+3. ✅ **The world.** Done in a first pass. Runs and other details come in later phases:
    - A bit more detail: smaller triangles near the mountain, bigger ones far away.
    - Weather by altitude: whiteout and heavy snow under the clouds, a clear sunset above.
    - A sunset sky, a low-poly sea of clouds, and taller distant ranges so it feels like a real place and not a lone mountain.
    - Tiered snowy pines in a few shapes, in forest patches that climb the mountain.
-4. **The chairlift (Blender).** A retro double chair, either bright chairs that pop against the snow or a rustic old double (your call). Towers, cable, bottom and top stations, plus the skier's legs, boots and skis for the first-person view.
+4. **The chairlift (Blender)** (next). A retro double chair, either bright chairs that pop against the snow or a rustic old double (your call). Towers, cable, bottom and top stations, plus the skier's legs, boots and skis for the first-person view.
 5. **First-person ride.** Sit in the chair, look around, tower jolts, unloading at the top.
 6. **Signpost and runs.** The 3D wooden signpost menu. Runs groomed through the trees (lighter snow, no trees in the lane). Skiing down a run to each section.
 7. **Life.** Little skiers on the runs, the lift turning, chimney smoke at the lodge, wind-blown snow off the ridges.
