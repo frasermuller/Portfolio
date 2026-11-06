@@ -1,6 +1,7 @@
 .app {
   position: relative;
   height: 100%;
+  overflow: hidden;
 }
 
 .scene {
@@ -13,11 +14,101 @@
   top: var(--margin);
   left: var(--margin);
   right: var(--margin);
-  /* Let drags fall through to the canvas except on the text itself. */
+  /* Let clicks fall through to the scene. */
   pointer-events: none;
 }
 
 .overlay p {
   margin-top: 16px;
   max-width: 36ch;
+}
+
+/* A trail junction signpost: plates stacked down the left. */
+.signpost {
+  position: absolute;
+  left: var(--margin);
+  bottom: var(--margin);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.sign,
+.skip {
+  font: 600 var(--step-body) / 1 var(--font-text);
+  border: 0;
+  cursor: pointer;
+}
+
+.sign {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px 12px 14px;
+  background: var(--plate);
+  color: var(--plate-ink);
+}
+
+.sign[aria-current='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.sign:focus-visible,
+.skip:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.symbol {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.symbol.green {
+  background: #2f9e5b;
+  border-radius: 50%;
+}
+
+.symbol.blue {
+  background: #2c6fd1;
+}
+
+.symbol.black {
+  background: #0c0d14;
+  transform: rotate(45deg) scale(0.82);
+  outline: 2px solid var(--plate-ink);
+}
+
+.symbol.summit {
+  background: var(--plate-ink);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.symbol.lodge {
+  background: #d4574e;
+  clip-path: polygon(50% 0, 100% 45%, 100% 100%, 0 100%, 0 45%);
+}
+
+.skip {
+  position: absolute;
+  right: var(--margin);
+  bottom: var(--margin);
+  padding: 12px 18px;
+  background: var(--plate);
+  color: var(--plate-ink);
+}
+
+@media (max-width: 640px) {
+  .signpost {
+    right: var(--margin);
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .sign {
+    padding: 10px 14px 10px 12px;
+  }
 }

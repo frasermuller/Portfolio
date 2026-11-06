@@ -1,12 +1,12 @@
 @import '@fontsource/anton';
 @import '@fontsource-variable/work-sans';
 
-/* Dusk on the mountain: navy sky, alpenglow pink on the snow. */
+/* A dusk whiteout: pale lavender fog, navy type, alpenglow pink for what's active. */
 :root {
-  --bg: #1a2039;
-  --surface: #212846;
-  --ink: #f9a3c0;
-  --muted: #b9879c;
+  --bg: #d9d3e4;
+  --ink: #1a2039;
+  --plate: #1a2039;
+  --plate-ink: #f6f3fb;
   --accent: #f9a3c0;
   --accent-ink: #1a2039;
 

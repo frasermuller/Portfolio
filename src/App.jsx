@@ -1,34 +1,88 @@
+import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { CameraControls } from '@react-three/drei'
+import { AnimatePresence, motion } from 'motion/react'
 import Mountain from './scene/Mountain.jsx'
+import Trees from './scene/Trees.jsx'
+import Snow from './scene/Snow.jsx'
+import CameraRig from './scene/CameraRig.jsx'
 import './App.css'
 
+const FOG = '#d9d3e4'
+
+// The signpost. Each sign is a place on the mountain, marked the way real trail signs are.
+const SIGNS = [
+  { shot: 'top', name: 'Summit', symbol: 'summit' },
+  { shot: 'about', name: 'About me', symbol: 'green' },
+  { shot: 'projects', name: 'Projects', symbol: 'blue' },
+  { shot: 'experience', name: 'Experience', symbol: 'black' },
+  { shot: 'contact', name: 'The lodge', symbol: 'lodge' },
+]
+
+// Snappy spring: quick to move, a tiny overshoot so it feels bouncy rather than mechanical.
+const spring = { type: 'spring', stiffness: 420, damping: 26 }
+
 function App() {
+  const [shot, setShot] = useState('top')
+  const [arrived, setArrived] = useState(false)
+  const [skip, setSkip] = useState(false)
+
   return (
     <main className="app">
-      {/* The 3D world fills the screen; the HTML overlay sits on top of it. */}
-      <Canvas className="scene" camera={{ position: [24, 10, 24], fov: 40 }}>
-        <color attach="background" args={['#1a2039']} />
-        <fog attach="fog" args={['#1a2039', 30, 70]} />
+      <Canvas className="scene" camera={{ fov: 38, near: 0.5, far: 1500 }} dpr={[1, 2]}>
+        {/* Sky and fog are the same colour, so the world dissolves into white instead of ending. */}
+        <color attach="background" args={[FOG]} />
+        <fogExp2 attach="fog" args={[FOG, 0.03]} />
 
-        {/* Sky light from above, a cool bounce from the snow below. */}
-        <hemisphereLight args={['#c9d4ff', '#2a3158', 0.9]} />
-        {/* The low sun, warm and pink, makes the alpenglow. */}
-        <directionalLight position={[-10, 6, 4]} intensity={2.2} color="#ffc2d4" />
+        <hemisphereLight args={['#e4e0ff', '#5a6290', 1.1]} />
+        {/* The low sun, warm and pink, makes the alpenglow on one side of every ridge. */}
+        <directionalLight position={[-120, 60, 80]} intensity={2.4} color="#ffc6d6" />
 
         <Mountain />
-
-        <CameraControls
-          minDistance={10}
-          maxDistance={45}
-          maxPolarAngle={Math.PI / 2.15}
-        />
+        <Trees />
+        <Snow />
+        <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
       </Canvas>
 
-      <header className="overlay">
-        <h1>Fraser Muller</h1>
-        <p>Developer. Drag to look around the mountain.</p>
-      </header>
+      <AnimatePresence>
+        {arrived && (
+          <motion.header
+            className="overlay"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...spring, delay: 0.1 }}
+          >
+            <h1>Fraser Muller</h1>
+            <p>Developer. Pick a run.</p>
+          </motion.header>
+        )}
+      </AnimatePresence>
+
+      {arrived && (
+        <nav className="signpost" aria-label="Sections">
+          {SIGNS.map((sign, i) => (
+            <motion.button
+              key={sign.shot}
+              className="sign"
+              aria-current={shot === sign.shot}
+              onClick={() => setShot(sign.shot)}
+              initial={{ opacity: 0, x: -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ ...spring, delay: 0.3 + i * 0.07 }}
+              whileHover={{ x: 6 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span className={`symbol ${sign.symbol}`} aria-hidden="true" />
+              {sign.name}
+            </motion.button>
+          ))}
+        </nav>
+      )}
+
+      {!arrived && (
+        <button className="skip" onClick={() => setSkip(true)}>
+          Skip the ride
+        </button>
+      )}
     </main>
   )
 }
