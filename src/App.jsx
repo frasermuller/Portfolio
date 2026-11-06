@@ -31,6 +31,7 @@ function App() {
   const [shot, setShot] = useState('top')
   const [arrived, setArrived] = useState(false)
   const [skip, setSkip] = useState(false)
+  const [speed, setSpeed] = useState(1)
 
   return (
     <main className="app">
@@ -48,7 +49,7 @@ function App() {
         <SummitProps />
         <TopStation onBench={() => arrived && setShot('view')} />
         <TrailBoard active={shot === 'board'} onOpen={() => arrived && setShot('board')} onPick={setShot} />
-        <CameraRig shot={shot} skip={skip} onArrive={() => setArrived(true)} />
+        <CameraRig shot={shot} skip={skip} speed={speed} onArrive={() => setArrived(true)} />
       </Canvas>
 
       <AnimatePresence>
@@ -105,10 +106,23 @@ function App() {
         </button>
       )}
 
+      {/* While riding up: press and hold (or hold Space/Enter on it) to speed the chair up, or skip straight to the top. */}
       {!arrived && (
-        <button className="corner" onClick={() => setSkip(true)}>
-          Skip the ride
-        </button>
+        <div className="ride">
+          <button
+            aria-pressed={speed > 1}
+            onPointerDown={() => setSpeed(5)}
+            onPointerUp={() => setSpeed(1)}
+            onPointerLeave={() => setSpeed(1)}
+            onPointerCancel={() => setSpeed(1)}
+            onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && !e.repeat && setSpeed(5)}
+            onKeyUp={() => setSpeed(1)}
+            onBlur={() => setSpeed(1)}
+          >
+            Hold to speed up
+          </button>
+          <button onClick={() => setSkip(true)}>Skip the ride</button>
+        </div>
       )}
     </main>
   )

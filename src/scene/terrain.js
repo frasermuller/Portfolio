@@ -222,14 +222,48 @@ export const ground = (x, z, up = 0) => new THREE.Vector3(x, heightAt(x, z) + up
 export const LIFT_BOTTOM = ground(LAKE.x + 6, LAKE.z - LAKE.radius - 4)
 export const LIFT_TOP = ground(TOP.x + 6, TOP.z + 8)
 const liftAt = (t) => [THREE.MathUtils.lerp(LIFT_BOTTOM.x, LIFT_TOP.x, t), THREE.MathUtils.lerp(LIFT_BOTTOM.z, LIFT_TOP.z, t)]
+
+// Towers every ~31 units up the line. Each starts 7 tall and gets raised until the cable, sagging a little between
+// towers, clears the ground by 5 across the whole span (less right by the stations, where it comes down to load).
+// The Blender chairlift will stand its towers on these spots.
+const SPANS = 11
+const SEAT = 1 // how high you sit above the snow in a station
+export const TOWERS = Array.from({ length: SPANS - 1 }, (_, i) => {
+  const [x, z] = liftAt((i + 1) / SPANS)
+  return { x, z, ground: heightAt(x, z), height: 7 }
+})
+const cablePoints = () => [
+  { x: LIFT_BOTTOM.x, z: LIFT_BOTTOM.z, y: LIFT_BOTTOM.y + SEAT },
+  ...TOWERS.map((tower) => ({ x: tower.x, z: tower.z, y: tower.ground + tower.height, tower })),
+  { x: LIFT_TOP.x, z: LIFT_TOP.z, y: LIFT_TOP.y + SEAT },
+]
+for (let pass = 0; pass < 30; pass++) {
+  let raised = false
+  const points = cablePoints()
+  for (let i = 0; i < points.length - 1; i++) {
+    const [a, b] = [points[i], points[i + 1]]
+    for (let s = 1; s < 20; s++) {
+      const t = s / 20
+      const x = THREE.MathUtils.lerp(a.x, b.x, t)
+      const z = THREE.MathUtils.lerp(a.z, b.z, t)
+      const fromStation = Math.min(Math.hypot(x - LIFT_BOTTOM.x, z - LIFT_BOTTOM.z), Math.hypot(x - LIFT_TOP.x, z - LIFT_TOP.z))
+      const needed = heightAt(x, z) + 5 * smoothstep(0, 14, fromStation)
+      const cable = THREE.MathUtils.lerp(a.y, b.y, t) - 0.8 * 4 * t * (1 - t)
+      if (cable < needed) {
+        for (const end of [a, b]) if (end.tower) end.tower.height += needed - cable + 0.1
+        raised = true
+        break
+      }
+    }
+  }
+  if (!raised) break
+}
+
+// The ride: one smooth curve through the tower tops, down into each station at seat height.
 export const liftLine = new THREE.CatmullRomCurve3(
-  Array.from({ length: 40 }, (_, i) => {
-    const t = i / 39
-    const [x, z] = liftAt(t)
-    // 7 units above the highest ground nearby, so the cable sails over the cliff band rather than dipping into it.
-    const nearby = [-1, -0.5, 0, 0.5, 1].map((step) => heightAt(...liftAt(THREE.MathUtils.clamp(t + step / 39, 0, 1))))
-    return new THREE.Vector3(x, Math.max(...nearby) + 7, z)
-  }),
+  cablePoints().map((p) => new THREE.Vector3(p.x, p.y, p.z)),
+  false,
+  'centripetal',
 )
 export const distanceToLift = (x, z) =>
   distanceToLine([[LIFT_BOTTOM.x, LIFT_BOTTOM.z], [LIFT_TOP.x, LIFT_TOP.z]], x, z)

@@ -3,10 +3,10 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import * as THREE from 'three'
-import { liftLine, shots } from './terrain.js'
+import { ground, liftLine, shots, smoothstep } from './terrain.js'
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const RIDE_SECONDS = 11
+const RIDE_SECONDS = 26 // hold the button to go 5x faster
 
 // Where the camera is and what it's looking at. GSAP moves these; every frame the real camera copies them.
 const pos = new THREE.Vector3()
@@ -34,7 +34,7 @@ function aim(yaw, pitch) {
   )
 }
 
-export default function CameraRig({ shot, skip, onArrive }) {
+export default function CameraRig({ shot, skip, speed, onArrive }) {
   const ride = useRef()
   const flight = useRef()
   const current = useRef('top') // where the camera is now (the intro already ends at the top)
@@ -68,49 +68,79 @@ export default function CameraRig({ shot, skip, onArrive }) {
     }
   }, [canvas])
 
-  // The intro: ride the chairlift up out of the whiteout, then turn around at the top to take in the view.
+  // The intro: ride the chairlift up out of the whiteout, then get off at the top and turn to take in the view.
   // (The fog thins by itself as you climb, see Atmosphere.)
   useGSAP(() => {
     const progress = { t: 0 }
     const place = () => {
       liftLine.getPointAt(progress.t, pos)
-      liftLine.getPointAt(Math.min(progress.t + 0.04, 1), look) // eyes up the lift line
+      // Face up the lift line but keep your head fairly level: staring straight up the cable is mostly sky.
+      const heading = liftLine.getTangentAt(progress.t)
+      aim(Math.atan2(heading.x, heading.z), THREE.MathUtils.clamp(Math.asin(heading.y) * 0.4 - 0.1, -0.4, 0.12))
     }
     place()
 
-    // Getting off: glide off the chair onto the platform while turning your head to face the view.
-    // The turn blends the left-right and up-down angles rather than the point you look at, so a big turn
-    // sweeps around smoothly instead of swinging through your feet.
+    // Getting off: stand up as the chair reaches the top station, glide down the ramp, carve left and stop
+    // facing the view. Your head follows the way you're sliding, then turns to the view as you slow down.
+    // Blending left-right and up-down angles (not the look point) keeps a big turn from swinging through your feet.
+    const top = liftLine.getPointAt(1)
+    const ramp = new THREE.CatmullRomCurve3([
+      top,
+      ground(top.x - 0.4, top.z - 4.5, 0.88),
+      ground(top.x - 3, top.z - 6.6, 0.86),
+      shots.top.camera,
+    ])
     const off = { t: 0 }
-    let start
     let from
     let to
     ride.current = gsap
-      .timeline({ onComplete: onArrive })
+      .timeline({ paused: true, onComplete: onArrive })
       .to(progress, { t: 1, duration: RIDE_SECONDS, ease: 'sine.inOut', onUpdate: place })
       .to(off, {
         t: 1,
-        duration: 2.4,
-        ease: 'power2.inOut',
+        duration: 3.6,
+        ease: 'power2.out', // a push off the chair, then easing to a stop
         onStart: () => {
-          start = pos.clone()
           from = headAngles(look)
           to = headAngles(shots.top.look, shots.top.camera)
-          // Go the short way round.
-          to.yaw = from.yaw + Math.atan2(Math.sin(to.yaw - from.yaw), Math.cos(to.yaw - from.yaw))
         },
         onUpdate: () => {
-          pos.lerpVectors(start, shots.top.camera, off.t)
-          aim(THREE.MathUtils.lerp(from.yaw, to.yaw, off.t), THREE.MathUtils.lerp(from.pitch, to.pitch, off.t))
+          ramp.getPointAt(off.t, pos)
+          // Knees bend as you push off the chair.
+          pos.y -= Math.sin(Math.min(off.t / 0.2, 1) * Math.PI) * 0.15
+          const tangent = ramp.getTangentAt(off.t)
+          const sliding = Math.atan2(tangent.x, tangent.z)
+          // Go the short way round from wherever you're sliding to the view.
+          const view = sliding + Math.atan2(Math.sin(to.yaw - sliding), Math.cos(to.yaw - sliding))
+          const turn = smoothstep(0.35, 1, off.t)
+          const glance = Math.min(off.t / 0.2, 1) // look down at the ramp for a moment
+          aim(
+            THREE.MathUtils.lerp(sliding, view, turn),
+            THREE.MathUtils.lerp(THREE.MathUtils.lerp(from.pitch, -0.12, glance), to.pitch, turn),
+          )
         },
       })
 
     if (reducedMotion) ride.current.progress(1)
   }, [])
 
+  // Start the ride once the scene is ready: the first second or so after loading stutters while everything
+  // gets built and sent to the GPU, so wait for a handful of smooth frames rather than starting mid-stutter.
+  const calm = useRef(0)
+  useFrame((_, delta) => {
+    if (ride.current?.paused() && ride.current.progress() === 0) {
+      calm.current = delta < 0.05 ? calm.current + 1 : 0
+      if (calm.current > 30) ride.current.play()
+    }
+  })
+
   useEffect(() => {
     if (skip) ride.current?.progress(1)
   }, [skip])
+
+  useEffect(() => {
+    ride.current?.timeScale(speed)
+  }, [speed])
 
   // Flying between places: a straight line could cut through the mountain, so it arcs up and over.
   useGSAP(

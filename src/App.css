@@ -161,3 +161,40 @@
     display: none;
   }
 }
+
+/* Ride controls, bottom right while you're on the lift (top right on phones, like the corner button). */
+.ride {
+  position: absolute;
+  right: var(--margin);
+  bottom: var(--margin);
+  display: flex;
+  gap: 8px;
+}
+
+.ride button {
+  font: 600 var(--step-body) / 1 var(--font-text);
+  border: 0;
+  cursor: pointer;
+  padding: 12px 18px;
+  background: var(--plate);
+  color: var(--plate-ink);
+  touch-action: none;
+  user-select: none;
+}
+
+.ride button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.ride button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .ride {
+    top: var(--margin);
+    bottom: auto;
+  }
+}
