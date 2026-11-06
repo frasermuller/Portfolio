@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { hash, heightAt, slopeAt, distanceToLift } from './terrain.js'
+import { CLIFFS, RUN_SPOTS, RUN_WIDTH, SUMMIT, distanceToLift, distanceToRun, fbm, hash, heightAt, slopeAt } from './terrain.js'
 
 const ROCK = new THREE.Color('#4d5a64')
 const SNOW = new THREE.Color('#f3f5fa')
@@ -32,26 +32,46 @@ function rockShape(seed) {
 
 const SHAPES = [1, 2, 3, 4].map(rockShape)
 
-// Rocks go on the cliff bands (anywhere steep), plus the odd boulder sitting out on the open snow.
+// Rocks are placed where real rock would be, not sprinkled everywhere:
+// a line along each cliff band, outcrops around the summit, a few on the steepest ridges,
+// and small boulder groups beside the run.
 function rockSpots() {
   const spots = []
-  for (let x = -480; x <= 480; x += 5) {
-    for (let z = -480; z <= 480; z += 5) {
-      const r = hash(x, z)
-      const slope = slopeAt(x, z)
-      const onCliff = slope > 1.05 && r < 0.18
-      const boulder = slope < 0.6 && r < 0.004
-      if (!onCliff && !boulder) continue
-      const y = heightAt(x, z)
-      if (y < 12 || distanceToLift(x, z) < 12) continue
-      spots.push({
-        x: x + (hash(z, x) - 0.5) * 4,
-        y: y - 1.5, // sunk in a little, so they look embedded in the slope rather than sitting on it
-        z: z + (hash(x + 1, z) - 0.5) * 4,
-        size: onCliff ? 1.5 + (r / 0.18) * 4 : 1.5 + hash(z, 9) * 2.5,
-        turn: hash(x, z + 3) * Math.PI * 2,
-        shape: Math.floor(hash(x + 7, z) * SHAPES.length),
-      })
+  const add = (x, z, size, seed) => {
+    if (distanceToLift(x, z) < 5) return
+    spots.push({ x, y: heightAt(x, z) - size * 0.35, z, size, turn: hash(seed, 3) * Math.PI * 2, shape: Math.floor(hash(seed, 7) * SHAPES.length) })
+  }
+
+  // Along each cliff band, just below the edge, in a slightly ragged double row.
+  CLIFFS.forEach(([ax, az, bx, bz], c) => {
+    const length = Math.hypot(bx - ax, bz - az)
+    const across = [(bz - az) / length, -(bx - ax) / length] // points downhill
+    for (let along = 0.06; along < 0.94; along += 2.4 / length) {
+      const seed = c * 1000 + Math.round(along * 1000)
+      const offset = 1 + hash(seed, 1) * 2.5
+      add(ax + (bx - ax) * along + across[0] * offset, az + (bz - az) * along + across[1] * offset, 1.4 + hash(seed, 2) * 1.8, seed)
+    }
+  })
+
+  // Outcrops on the steep ground around the summit, and on the steepest ridges further out, in clumps.
+  for (let x = -260; x <= 260; x += 4) {
+    for (let z = -300; z <= 200; z += 4) {
+      const nearSummit = Math.hypot(x - SUMMIT.x, z - SUMMIT.z) < 60
+      const clump = fbm(x * 0.03 + 5, z * 0.03 - 2)
+      const keep = nearSummit ? hash(x, z) < 0.35 : clump > 0.6 && hash(x, z) < 0.25
+      if (!keep || distanceToRun(x, z) < RUN_WIDTH || slopeAt(x, z) < (nearSummit ? 0.85 : 1)) continue
+      add(x + (hash(z, x) - 0.5) * 3, z + (hash(x + 1, z) - 0.5) * 3, 1.3 + hash(x, z + 5) * 2.2, x * 31 + z)
+    }
+  }
+
+  // Boulder groups of 3-4 sitting just off the edge of the run.
+  for (let g = 0; g < 9; g++) {
+    const point = RUN_SPOTS[Math.floor((g + 0.5) * (RUN_SPOTS.length / 9))]
+    const side = g % 2 ? 1 : -1
+    const cx = point[0] + side * (RUN_WIDTH + 4 + hash(g, 1) * 4)
+    const cz = point[1] + (hash(g, 2) - 0.5) * 6
+    for (let k = 0; k < 3 + (g % 2); k++) {
+      add(cx + (hash(g, k + 3) - 0.5) * 6, cz + (hash(k + 3, g) - 0.5) * 6, 0.8 + hash(g, k + 9) * 1.4, g * 50 + k)
     }
   }
   return spots
