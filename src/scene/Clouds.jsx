@@ -1,52 +1,39 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { Cloud, Clouds as CloudGroup } from '@react-three/drei'
 import * as THREE from 'three'
-import { heightAt } from './terrain.js'
+import { hash, heightAt } from './terrain.js'
 import { CLOUD_BASE, CLOUD_TOP } from './weather.js'
 
-const CLUSTERS = 320
-const PUFFS_PER_CLUSTER = 5
-
-// A sea of chunky low-poly puffs. Each cluster is a few squashed balls bunched together, like a cartoon cumulus.
-function buildPuffs() {
-  const puffs = []
-  for (let i = 0; i < CLUSTERS; i++) {
-    const angle = Math.random() * Math.PI * 2
-    const radius = 40 + Math.sqrt(Math.random()) * 480 // sqrt spreads them evenly instead of crowding the middle
-    const cx = Math.cos(angle) * radius
-    const cz = Math.sin(angle) * radius
-    const cy = CLOUD_BASE + Math.random() * (CLOUD_TOP - CLOUD_BASE - 6)
-    if (heightAt(cx, cz) > cy + 6) continue // buried inside a mountain, nobody would see it
-    for (let k = 0; k < PUFFS_PER_CLUSTER; k++) {
-      const size = 7 + Math.random() * 13
-      puffs.push({
-        x: cx + (Math.random() - 0.5) * 40,
-        y: cy + Math.random() * 5,
-        z: cz + (Math.random() - 0.5) * 40,
-        size,
-      })
-    }
+// One soft puff, drawn on a canvas: a few overlapping fuzzy circles so the edge isn't a perfect disc.
+// drei's clouds are built from many of these as camera-facing cards, stacked and faded together.
+function makePuff() {
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 128
+  const context = canvas.getContext('2d')
+  for (const [x, y, r] of [[64, 70, 50], [44, 60, 30], [84, 58, 32], [64, 46, 30]]) {
+    const gradient = context.createRadialGradient(x, y, 0, x, y, r)
+    gradient.addColorStop(0, 'rgba(255,255,255,0.9)')
+    gradient.addColorStop(1, 'rgba(255,255,255,0)')
+    context.fillStyle = gradient
+    context.fillRect(0, 0, 128, 128)
   }
-  return puffs
+  return canvas.toDataURL()
 }
+const puff = makePuff()
 
-// Made once when the file loads, so they don't reshuffle on every render.
-const puffs = buildPuffs()
+// Where the cloud banks sit: over the valleys, anywhere the ground is below the top of the cloud layer.
+const banks = []
+for (let i = 0; banks.length < 80 && i < 3000; i++) {
+  const angle = hash(i, 11) * Math.PI * 2
+  const radius = 70 + Math.sqrt(hash(i, 12)) * 420
+  const x = Math.cos(angle) * radius
+  const z = Math.sin(angle) * radius
+  if (heightAt(x, z) < CLOUD_TOP - 12) banks.push({ x, z, seed: i })
+}
 
 export default function Clouds() {
   const ref = useRef()
-
-  useLayoutEffect(() => {
-    const dummy = new THREE.Object3D()
-    puffs.forEach((puff, i) => {
-      dummy.position.set(puff.x, puff.y, puff.z)
-      dummy.scale.set(puff.size, puff.size * 0.45, puff.size)
-      dummy.rotation.y = puff.x
-      dummy.updateMatrix()
-      ref.current.setMatrixAt(i, dummy.matrix)
-    })
-    ref.current.instanceMatrix.needsUpdate = true
-  }, [])
 
   // The whole sea turns very slowly around the mountain (one lap every half hour or so).
   useFrame((_, delta) => {
@@ -54,10 +41,25 @@ export default function Clouds() {
   })
 
   return (
-    <instancedMesh ref={ref} args={[null, null, puffs.length]} frustumCulled={false}>
-      <icosahedronGeometry args={[1, 1]} />
-      {/* A little glow of their own, so the undersides stay soft grey instead of going dark. */}
-      <meshStandardMaterial color="#fbf7ff" emissive="#c9c2dc" emissiveIntensity={0.45} flatShading roughness={1} />
-    </instancedMesh>
+    <group ref={ref}>
+      <CloudGroup texture={puff} limit={1400} material={THREE.MeshLambertMaterial}>
+        {banks.map((bank) => (
+          <Cloud
+            key={bank.seed}
+            seed={bank.seed}
+            position={[bank.x, (CLOUD_BASE + CLOUD_TOP) / 2, bank.z]}
+            bounds={[75, (CLOUD_TOP - CLOUD_BASE) / 3, 75]}
+            segments={16}
+            volume={45}
+            smallestVolume={0.4}
+            growth={3}
+            speed={0.05}
+            opacity={0.85}
+            fade={60}
+            color="#ffffff"
+          />
+        ))}
+      </CloudGroup>
+    </group>
   )
 }
